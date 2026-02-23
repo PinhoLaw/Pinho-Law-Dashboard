@@ -17,47 +17,43 @@ let cachedToken: {
 
 /**
  * Exchange an authorization code for access + refresh tokens.
- * Tries body-params method first, then Basic Auth fallback.
+ * Uses standard OAuth2 form-urlencoded body params as per Clio documentation.
  */
 export async function exchangeCodeForToken(code: string) {
-  // Method 1: client_id + client_secret in body (per Clio docs)
-  const bodyParams = new URLSearchParams({
-    client_id: CLIO_CLIENT_ID,
-    client_secret: CLIO_CLIENT_SECRET,
-    grant_type: 'authorization_code',
-    code,
-    redirect_uri: CLIO_REDIRECT_URI,
-  });
+  console.log('[Clio] Exchanging code for token...');
+  console.log('[Clio] Client ID:', CLIO_CLIENT_ID?.substring(0, 8) + '...');
+  console.log('[Clio] Redirect URI:', CLIO_REDIRECT_URI);
+  console.log('[Clio] Code:', code.substring(0, 10) + '... (' + code.length + ' chars)');
 
-  let res = await fetch(CLIO_TOKEN_URL, {
+  // Standard OAuth2: client credentials in body (per Clio docs)
+  const body = new URLSearchParams();
+  body.append('client_id', CLIO_CLIENT_ID);
+  body.append('client_secret', CLIO_CLIENT_SECRET);
+  body.append('grant_type', 'authorization_code');
+  body.append('code', code);
+  body.append('redirect_uri', CLIO_REDIRECT_URI);
+
+  const res = await fetch(CLIO_TOKEN_URL, {
     method: 'POST',
-    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-    body: bodyParams.toString(),
+    headers: {
+      'Content-Type': 'application/x-www-form-urlencoded',
+    },
+    body: body.toString(),
   });
 
-  // Method 2: Basic Auth fallback
   if (!res.ok) {
-    const basicCreds = Buffer.from(`${CLIO_CLIENT_ID}:${CLIO_CLIENT_SECRET}`).toString('base64');
-    res = await fetch(CLIO_TOKEN_URL, {
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/x-www-form-urlencoded',
-        Authorization: `Basic ${basicCreds}`,
-      },
-      body: new URLSearchParams({
-        grant_type: 'authorization_code',
-        code,
-        redirect_uri: CLIO_REDIRECT_URI,
-      }).toString(),
-    });
-  }
-
-  if (!res.ok) {
-    const body = await res.text();
-    throw new Error(`Clio token exchange failed (${res.status}): ${body}`);
+    const errorBody = await res.text();
+    console.error('[Clio] Token exchange failed:', res.status, errorBody);
+    throw new Error(
+      `Clio token exchange failed (HTTP ${res.status}): ${errorBody}\n` +
+      `Client ID prefix: ${CLIO_CLIENT_ID?.substring(0, 8)}...\n` +
+      `Redirect URI: ${CLIO_REDIRECT_URI}\n` +
+      `Code prefix: ${code.substring(0, 10)}...`
+    );
   }
 
   const data = await res.json();
+  console.log('[Clio] Token exchange successful! Token type:', data.token_type);
   return {
     access_token: data.access_token as string,
     refresh_token: data.refresh_token as string,

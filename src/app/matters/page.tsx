@@ -1,76 +1,167 @@
 'use client';
 
-import { useEffect, useState } from 'react';
+import { useEffect, useState, useMemo, Fragment } from 'react';
 import DashboardShell from '@/components/DashboardShell';
 import StatCard from '@/components/StatCard';
-import { FolderOpen, CheckCircle, Clock, AlertCircle } from 'lucide-react';
-import type { Matter } from '@/lib/types';
+import { FolderOpen, CheckCircle, Clock, AlertCircle, ChevronDown, ChevronRight, Mail, Phone as PhoneIcon } from 'lucide-react';
+
+interface EnrichedMatter {
+  id: number;
+  displayNumber: string;
+  description: string;
+  status: string;
+  openDate: string;
+  closeDate: string;
+  billable: boolean;
+  clientName: string;
+  clientType: string;
+  clientId: number;
+  responsibleAttorney: string;
+  practiceArea: string;
+  totalBilled: number;
+  totalPaid: number;
+  totalOutstanding: number;
+  lastInvoiceNumber: string;
+  lastInvoiceDate: string;
+  billCount: number;
+  phone: string;
+  email: string;
+  daysOpen: number;
+}
+
+interface ClioStats {
+  totalMatters: number;
+  openMatters: number;
+  closedMatters: number;
+  totalOutstanding: number;
+  totalPaid: number;
+  totalBilled: number;
+  clientsOwing: number;
+  collectionRate: number;
+  withPhone: number;
+  withoutPhone: number;
+}
+
+interface ClioResponse {
+  matters: EnrichedMatter[];
+  stats: ClioStats;
+  byArea: { name: string; count: number; outstanding: number }[];
+  fetchedAt: string;
+}
 
 export default function AllMatters() {
-  const [matters, setMatters] = useState<Matter[]>([]);
+  const [data, setData] = useState<ClioResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('all');
+  const [statusFilter, setStatusFilter] = useState('Open');
   const [areaFilter, setAreaFilter] = useState('all');
-  const [personFilter, setPersonFilter] = useState('all');
-  const [expanded, setExpanded] = useState<string | null>(null);
+  const [expanded, setExpanded] = useState<number | null>(null);
 
   useEffect(() => {
-    fetch('/api/matters')
+    fetch('/api/clio/matters')
       .then(r => r.json())
-      .then(d => { setMatters(d.matters || []); setLoading(false); })
+      .then(d => { setData(d); setLoading(false); })
       .catch(() => setLoading(false));
   }, []);
 
-  const statuses = [...new Set(matters.map(m => m.statusClio).filter(Boolean))];
-  const areas = [...new Set(matters.map(m => m.area).filter(Boolean))];
-  const persons = [...new Set(matters.map(m => m.responsiblePerson).filter(Boolean))];
+  const matters = data?.matters || [];
 
-  const filtered = matters.filter(m => {
-    if (search && !m.clientFullName.toLowerCase().includes(search.toLowerCase()) &&
-        !m.clioMatter.toLowerCase().includes(search.toLowerCase()) &&
-        !m.matterName.toLowerCase().includes(search.toLowerCase())) return false;
-    if (statusFilter !== 'all' && m.statusClio !== statusFilter) return false;
-    if (areaFilter !== 'all' && m.area !== areaFilter) return false;
-    if (personFilter !== 'all' && m.responsiblePerson !== personFilter) return false;
-    return true;
-  });
+  const areas = useMemo(() => {
+    const areaSet = new Set(matters.map(m => m.practiceArea).filter(Boolean));
+    return Array.from(areaSet).sort();
+  }, [matters]);
 
-  const active = matters.filter(m => m.statusClio !== 'Closed').length;
-  const closed = matters.filter(m => m.statusClio === 'Closed').length;
-  const withOutstanding = matters.filter(m => Number(m.clioOutstanding) > 0).length;
+  const filtered = useMemo(() => {
+    return matters
+      .filter(m => {
+        if (search) {
+          const q = search.toLowerCase();
+          if (!m.clientName.toLowerCase().includes(q) &&
+              !m.displayNumber.toLowerCase().includes(q) &&
+              !m.description.toLowerCase().includes(q) &&
+              !m.responsibleAttorney.toLowerCase().includes(q)) return false;
+        }
+        if (statusFilter !== 'all' && m.status !== statusFilter) return false;
+        if (areaFilter !== 'all' && m.practiceArea !== areaFilter) return false;
+        return true;
+      })
+      .sort((a, b) => b.totalOutstanding - a.totalOutstanding);
+  }, [matters, search, statusFilter, areaFilter]);
 
-  const formatCurrency = (n: number) => n ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00';
+  const formatCurrency = (n: number) =>
+    n ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00';
+
+  const formatCompact = (n: number) => {
+    if (n >= 1000000) return '$' + (n / 1000000).toFixed(1) + 'M';
+    if (n >= 1000) return '$' + (n / 1000).toFixed(1) + 'K';
+    return formatCurrency(n);
+  };
 
   const getStatusBadge = (status: string) => {
     if (status === 'Open') return 'badge-success';
     if (status === 'Closed') return 'badge-neutral';
-    return 'badge-warning';
+    if (status === 'Pending') return 'badge-warning';
+    return 'badge-info';
   };
 
   return (
     <DashboardShell>
       <div className="mb-8">
-        <h1 className="text-[22px] font-semibold tracking-tight text-[#1D1D1F] mb-1">All Matters</h1>
-        <p className="text-[13px] text-[#98989D]">Complete case list from the Ongoing tab</p>
+        <div className="flex items-baseline gap-3 mb-1">
+          <h1 className="font-display text-[32px] italic text-[#F0EDE6] tracking-tight">
+            All Matters
+          </h1>
+          <span className="text-[11px] text-[#3A3A3E] mono">
+            {data ? `${data.stats.totalMatters} total` : ''}
+          </span>
+        </div>
+        <p className="text-[13px] text-[#5A5A5E]">
+          Complete case list from Clio — every matter, every dollar
+        </p>
       </div>
 
       {loading ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => <div key={i} className="h-24 loading-shimmer" />)}
+            {[1,2,3,4].map(i => <div key={i} className="h-28 loading-shimmer" />)}
           </div>
           <div className="h-96 loading-shimmer" />
         </div>
-      ) : (
+      ) : data ? (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
-            <StatCard label="Total Matters" value={matters.length} icon={FolderOpen} accent="#007AFF" />
-            <StatCard label="Active" value={active} icon={CheckCircle} accent="#34C759" />
-            <StatCard label="Closed" value={closed} icon={Clock} accent="#98989D" />
-            <StatCard label="With Balance" value={withOutstanding} icon={AlertCircle} accent="#FF9500" />
+            <StatCard
+              label="Total Matters"
+              value={data.stats.totalMatters.toLocaleString()}
+              icon={FolderOpen}
+              accent="#3B82F6"
+              glowClass="stat-value-info"
+            />
+            <StatCard
+              label="Open"
+              value={data.stats.openMatters}
+              icon={CheckCircle}
+              accent="#10B981"
+              glowClass="stat-value-success"
+              subtext={`${Math.round((data.stats.openMatters / data.stats.totalMatters) * 100)}% of total`}
+            />
+            <StatCard
+              label="Closed"
+              value={data.stats.closedMatters.toLocaleString()}
+              icon={Clock}
+              accent="#5A5A5E"
+            />
+            <StatCard
+              label="With Balance"
+              value={data.stats.clientsOwing}
+              icon={AlertCircle}
+              accent="#F59E0B"
+              glowClass="stat-value-warning"
+              subtext={formatCompact(data.stats.totalOutstanding)}
+            />
           </div>
 
+          {/* Filters */}
           <div className="flex flex-wrap gap-3 mb-5">
             <input
               type="text"
@@ -79,113 +170,200 @@ export default function AllMatters() {
               onChange={e => setSearch(e.target.value)}
               className="px-4 py-2.5 input-field flex-1 min-w-[200px]"
             />
-            <select value={statusFilter} onChange={e => setStatusFilter(e.target.value)} className="px-3 py-2.5 select-field">
+            <select
+              value={statusFilter}
+              onChange={e => setStatusFilter(e.target.value)}
+              className="px-3 py-2.5 select-field"
+            >
               <option value="all">All Status</option>
-              {statuses.map(s => <option key={s} value={s}>{s}</option>)}
+              <option value="Open">Open</option>
+              <option value="Closed">Closed</option>
+              <option value="Pending">Pending</option>
             </select>
-            <select value={areaFilter} onChange={e => setAreaFilter(e.target.value)} className="px-3 py-2.5 select-field">
+            <select
+              value={areaFilter}
+              onChange={e => setAreaFilter(e.target.value)}
+              className="px-3 py-2.5 select-field"
+            >
               <option value="all">All Areas</option>
               {areas.map(a => <option key={a} value={a}>{a}</option>)}
             </select>
-            <select value={personFilter} onChange={e => setPersonFilter(e.target.value)} className="px-3 py-2.5 select-field">
-              <option value="all">All Attorneys</option>
-              {persons.map(p => <option key={p} value={p}>{p}</option>)}
-            </select>
           </div>
 
+          {/* Table */}
           <div className="card overflow-hidden">
-            <div className="overflow-x-auto max-h-[600px] overflow-y-auto">
+            <div className="overflow-x-auto max-h-[640px] overflow-y-auto">
               <table className="data-table">
                 <thead>
                   <tr>
+                    <th className="w-6"></th>
                     <th className="text-left">Matter #</th>
                     <th className="text-left">Client</th>
-                    <th className="text-left">Matter Name</th>
+                    <th className="text-left">Description</th>
                     <th className="text-left">Status</th>
                     <th className="text-left">Area</th>
-                    <th className="text-left">Attorney</th>
                     <th className="text-right">Outstanding</th>
                     <th className="text-right">Paid</th>
+                    <th className="text-right">Billed</th>
                     <th className="text-left">Open Date</th>
                   </tr>
                 </thead>
                 <tbody>
                   {filtered.map((m) => (
-                    <>
+                    <Fragment key={m.id}>
                       <tr
-                        key={m.clioMatter}
                         className="cursor-pointer"
-                        onClick={() => setExpanded(expanded === m.clioMatter ? null : m.clioMatter)}
+                        onClick={() => setExpanded(expanded === m.id ? null : m.id)}
                       >
-                        <td><span className="mono text-[12px] text-[#007AFF]">{m.clioMatter}</span></td>
-                        <td><span className="font-medium text-[#1D1D1F]">{m.clientFullName}</span></td>
-                        <td><span className="text-[13px] truncate block max-w-[220px] text-[#6E6E73]">{m.matterName}</span></td>
-                        <td><span className={`badge ${getStatusBadge(m.statusClio)}`}>{m.statusClio}</span></td>
-                        <td><span className="text-[12px] text-[#6E6E73]">{m.area || '—'}</span></td>
-                        <td><span className="text-[13px] text-[#6E6E73]">{m.responsiblePerson || '—'}</span></td>
+                        <td className="!pr-0">
+                          {expanded === m.id
+                            ? <ChevronDown size={14} className="text-[#5A5A5E]" />
+                            : <ChevronRight size={14} className="text-[#3A3A3E]" />
+                          }
+                        </td>
+                        <td>
+                          <span className="mono text-[12px] text-[#60A5FA]">{m.displayNumber}</span>
+                        </td>
+                        <td>
+                          <span className="font-medium text-[#F0EDE6]">{m.clientName}</span>
+                        </td>
+                        <td>
+                          <span className="text-[13px] truncate block max-w-[220px] text-[#8A8A8E]">
+                            {m.description || '\u2014'}
+                          </span>
+                        </td>
+                        <td>
+                          <span className={`badge ${getStatusBadge(m.status)}`}>{m.status}</span>
+                        </td>
+                        <td>
+                          {m.practiceArea && m.practiceArea !== 'Uncategorized' ? (
+                            <span className="badge badge-brand">{m.practiceArea}</span>
+                          ) : (
+                            <span className="text-[12px] text-[#3A3A3E]">{'\u2014'}</span>
+                          )}
+                        </td>
                         <td className="text-right">
-                          <span className="text-[13px] mono" style={{ color: Number(m.clioOutstanding) > 0 ? '#FF3B30' : '#C7C7CC' }}>
-                            {formatCurrency(Number(m.clioOutstanding))}
+                          <span className="text-[13px] mono" style={{
+                            color: m.totalOutstanding > 0 ? '#F87171' : '#3A3A3E'
+                          }}>
+                            {formatCurrency(m.totalOutstanding)}
                           </span>
                         </td>
                         <td className="text-right">
-                          <span className="text-[13px] mono" style={{ color: Number(m.clioPaid) > 0 ? '#34C759' : '#C7C7CC' }}>
-                            {formatCurrency(Number(m.clioPaid))}
+                          <span className="text-[13px] mono" style={{
+                            color: m.totalPaid > 0 ? '#34D399' : '#3A3A3E'
+                          }}>
+                            {formatCurrency(m.totalPaid)}
                           </span>
                         </td>
-                        <td><span className="text-[12px] text-[#98989D]">{m.openDate || '—'}</span></td>
+                        <td className="text-right">
+                          <span className="text-[13px] mono text-[#8A8A8E]">
+                            {formatCurrency(m.totalBilled)}
+                          </span>
+                        </td>
+                        <td>
+                          <span className="text-[12px] text-[#5A5A5E]">{m.openDate || '\u2014'}</span>
+                        </td>
                       </tr>
-                      {expanded === m.clioMatter && (
-                        <tr key={`${m.clioMatter}-detail`}>
-                          <td colSpan={9} className="!bg-[#F5F5F7] !p-5">
-                            <div className="grid grid-cols-2 md:grid-cols-4 gap-4 text-[13px] animate-fade-in">
+
+                      {/* Expanded detail row */}
+                      {expanded === m.id && (
+                        <tr>
+                          <td colSpan={10} style={{ background: '#161618', padding: '20px 24px' }}>
+                            <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5 animate-fade-in">
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Current Status</p>
-                                <p className="text-[#1D1D1F]">{m.currentStatus || '—'}</p>
+                                <p className="detail-label">Days Open</p>
+                                <p className="detail-value mono" style={{
+                                  color: m.daysOpen > 365 ? '#F87171' : m.daysOpen > 180 ? '#FBBF24' : '#F0EDE6'
+                                }}>
+                                  {m.daysOpen} days
+                                </p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">WhatsApp Phone</p>
-                                <p style={{ color: m.whatsAppPhone ? '#34C759' : '#FF3B30' }}>{m.whatsAppPhone || 'Missing'}</p>
+                                <p className="detail-label">Client Type</p>
+                                <p className="detail-value">{m.clientType || '\u2014'}</p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Last WA Sent</p>
-                                <p className="text-[#6E6E73]">{m.lastWaSent || 'Never'}</p>
+                                <p className="detail-label">Billable</p>
+                                <p className="detail-value">{m.billable ? 'Yes' : 'No'}</p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Notes</p>
-                                <p className="text-[#6E6E73]">{m.notes || '—'}</p>
+                                <p className="detail-label">Invoices</p>
+                                <p className="detail-value mono">{m.billCount || 0}</p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Observations</p>
-                                <p className="text-[#6E6E73]">{m.observations || '—'}</p>
+                                <p className="detail-label">Last Invoice</p>
+                                <p className="detail-value">
+                                  {m.lastInvoiceNumber ? (
+                                    <span className="mono text-[12px]">
+                                      #{m.lastInvoiceNumber}
+                                      {m.lastInvoiceDate && (
+                                        <span className="text-[#5A5A5E] ml-1">
+                                          ({m.lastInvoiceDate})
+                                        </span>
+                                      )}
+                                    </span>
+                                  ) : '\u2014'}
+                                </p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Next Step</p>
-                                <p className="text-[#6E6E73]">{m.nextStepAndWho || '—'}</p>
+                                <p className="detail-label">Attorney</p>
+                                <p className="detail-value">
+                                  {m.responsibleAttorney || 'Unassigned'}
+                                </p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Billable</p>
-                                <p className="text-[#6E6E73]">{formatCurrency(m.clioBillable)}</p>
+                                <p className="detail-label">Phone</p>
+                                <p className="detail-value flex items-center gap-1.5">
+                                  {m.phone ? (
+                                    <>
+                                      <PhoneIcon size={12} className="text-[#34D399]" />
+                                      <span className="mono text-[12px]">{m.phone}</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-[#F87171] text-[12px]">Missing</span>
+                                  )}
+                                </p>
                               </div>
                               <div>
-                                <p className="text-[10px] font-semibold uppercase tracking-wider text-[#98989D] mb-1">Non-Billable</p>
-                                <p className="text-[#6E6E73]">{formatCurrency(m.clioNonBillable)}</p>
+                                <p className="detail-label">Email</p>
+                                <p className="detail-value flex items-center gap-1.5">
+                                  {m.email ? (
+                                    <>
+                                      <Mail size={12} className="text-[#60A5FA]" />
+                                      <span className="text-[12px] truncate max-w-[180px]">{m.email}</span>
+                                    </>
+                                  ) : (
+                                    <span className="text-[#5A5A5E] text-[12px]">{'\u2014'}</span>
+                                  )}
+                                </p>
                               </div>
+                              {m.closeDate && (
+                                <div>
+                                  <p className="detail-label">Closed</p>
+                                  <p className="detail-value text-[12px]">{m.closeDate}</p>
+                                </div>
+                              )}
                             </div>
                           </td>
                         </tr>
                       )}
-                    </>
+                    </Fragment>
                   ))}
                 </tbody>
               </table>
             </div>
           </div>
 
-          <p className="text-[11px] mt-3 text-[#98989D]">
-            Showing {filtered.length} of {matters.length} matters · Click a row for details
+          <p className="text-[11px] mt-3 text-[#3A3A3E]">
+            Showing {filtered.length} of {matters.length} matters
+            {'\u00A0\u00B7\u00A0'}Click a row for details
           </p>
         </>
+      ) : (
+        <div className="card p-8 text-center">
+          <p className="text-[#F87171] text-sm">Failed to load matters from Clio</p>
+        </div>
       )}
     </DashboardShell>
   );

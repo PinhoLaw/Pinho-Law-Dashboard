@@ -46,8 +46,8 @@ interface ClioBill {
   paid: number;
   pending: number;
   due: number;
-  status: string;
-  matter?: { id: number; display_number: string };
+  state: string;
+  matters?: { id: number; display_number: string }[];
 }
 
 interface SyncResult {
@@ -110,7 +110,7 @@ export async function GET(req: NextRequest) {
     let clioBills: ClioBill[] = [];
     try {
       clioBills = await clioGetAll('/bills', {
-        fields: 'id,total,paid,pending,due,status,matter{id,display_number}',
+        fields: 'id,total,paid,pending,due,state,matters{id,display_number}',
         order: 'id(asc)',
       }) as unknown as ClioBill[];
       result.billsFound = clioBills.length;
@@ -118,15 +118,20 @@ export async function GET(req: NextRequest) {
       result.errors.push(`Failed to fetch bills: ${err instanceof Error ? err.message : 'unknown'}`);
     }
 
-    // Step 4: Aggregate billing per matter
+    // Step 4: Aggregate billing per matter (skip void/deleted bills)
     const billingByMatter: Map<string, { paid: number; outstanding: number }> = new Map();
     for (const bill of clioBills) {
-      const matterNum = bill.matter?.display_number;
-      if (!matterNum) continue;
-      const existing = billingByMatter.get(matterNum) || { paid: 0, outstanding: 0 };
-      existing.paid += (bill.paid || 0);
-      existing.outstanding += ((bill.due || 0) - (bill.paid || 0));
-      billingByMatter.set(matterNum, existing);
+      // Skip void and deleted bills
+      if (bill.state === 'void' || bill.state === 'deleted') continue;
+      const matters = bill.matters || [];
+      for (const m of matters) {
+        const matterNum = m.display_number;
+        if (!matterNum) continue;
+        const existing = billingByMatter.get(matterNum) || { paid: 0, outstanding: 0 };
+        existing.paid += (bill.paid || 0);
+        existing.outstanding += (bill.due || 0);
+        billingByMatter.set(matterNum, existing);
+      }
     }
 
     // Step 5: Fetch contacts for phone numbers
