@@ -125,9 +125,17 @@ export async function getAccessToken(): Promise<string> {
 }
 
 /**
- * Make an authenticated GET request to Clio API v4
+ * Sleep helper
  */
-export async function clioGet(path: string, params: Record<string, string> = {}) {
+function sleep(ms: number) {
+  return new Promise(resolve => setTimeout(resolve, ms));
+}
+
+/**
+ * Make an authenticated GET request to Clio API v4
+ * Includes automatic retry on 429 rate limit errors
+ */
+export async function clioGet(path: string, params: Record<string, string> = {}, retries = 3): Promise<Record<string, unknown>> {
   const token = await getAccessToken();
   const url = new URL(`${CLIO_API_BASE}${path}`);
   for (const [k, v] of Object.entries(params)) {
@@ -141,28 +149,43 @@ export async function clioGet(path: string, params: Record<string, string> = {})
     },
   });
 
+  // Handle rate limiting with retry
+  if (res.status === 429 && retries > 0) {
+    const retryHeader = res.headers.get('Retry-After');
+    const waitSeconds = retryHeader ? parseInt(retryHeader, 10) : 20;
+    console.log(`[Clio] Rate limited. Waiting ${waitSeconds}s before retry (${retries} left)...`);
+    await sleep(waitSeconds * 1000);
+    return clioGet(path, params, retries - 1);
+  }
+
   if (!res.ok) {
     const text = await res.text();
     throw new Error(`Clio API ${res.status}: ${text}`);
   }
 
-  return res.json();
+  return res.json() as Promise<Record<string, unknown>>;
 }
 
 /**
- * Paginate through all results for a Clio API endpoint
+ * Paginate through all results for a Clio API endpoint.
+ * Adds a small delay between pages to avoid hitting Clio's rate limit (50 req/s).
  */
 export async function clioGetAll(path: string, params: Record<string, string> = {}) {
   const results: Record<string, unknown>[] = [];
   let offset = 0;
   const limit = 200;
+  let page = 0;
 
   while (true) {
+    // Throttle: wait 250ms between pages (max ~4 req/s per dataset)
+    if (page > 0) await sleep(250);
+
     const data = await clioGet(path, { ...params, limit: String(limit), offset: String(offset) });
     const items = (data.data || []) as Record<string, unknown>[];
     results.push(...items);
     if (items.length < limit) break;
     offset += limit;
+    page++;
   }
 
   return results;

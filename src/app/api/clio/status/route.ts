@@ -13,7 +13,7 @@ export async function GET() {
     // Try a test API call
     try {
       const { clioGet } = await import('@/lib/clio');
-      const data = await clioGet('/matters', { limit: '1', status: 'Open' });
+      const data = await clioGet('/matters', { limit: '1', status: 'Open' }) as { meta?: { records?: number } };
       const count = data.meta?.records || 0;
 
       return new NextResponse(

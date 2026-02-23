@@ -53,7 +53,7 @@ export default function AllMatters() {
   const [data, setData] = useState<ClioResponse | null>(null);
   const [loading, setLoading] = useState(true);
   const [search, setSearch] = useState('');
-  const [statusFilter, setStatusFilter] = useState('Open');
+  const [tab, setTab] = useState<'open' | 'archive'>('open');
   const [areaFilter, setAreaFilter] = useState('all');
   const [expanded, setExpanded] = useState<number | null>(null);
 
@@ -74,6 +74,9 @@ export default function AllMatters() {
   const filtered = useMemo(() => {
     return matters
       .filter(m => {
+        // Tab filter: open tab shows Open/Pending, archive shows Closed
+        if (tab === 'open' && m.status === 'Closed') return false;
+        if (tab === 'archive' && m.status !== 'Closed') return false;
         if (search) {
           const q = search.toLowerCase();
           if (!m.clientName.toLowerCase().includes(q) &&
@@ -81,12 +84,11 @@ export default function AllMatters() {
               !m.description.toLowerCase().includes(q) &&
               !m.responsibleAttorney.toLowerCase().includes(q)) return false;
         }
-        if (statusFilter !== 'all' && m.status !== statusFilter) return false;
         if (areaFilter !== 'all' && m.practiceArea !== areaFilter) return false;
         return true;
       })
       .sort((a, b) => b.totalOutstanding - a.totalOutstanding);
-  }, [matters, search, statusFilter, areaFilter]);
+  }, [matters, search, tab, areaFilter]);
 
   const formatCurrency = (n: number) =>
     n ? '$' + n.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 }) : '$0.00';
@@ -161,6 +163,24 @@ export default function AllMatters() {
             />
           </div>
 
+          {/* Tabs */}
+          <div className="flex items-center gap-2 mb-5">
+            <button
+              onClick={() => { setTab('open'); setExpanded(null); }}
+              className={`pill ${tab === 'open' ? 'pill-active' : ''}`}
+            >
+              Open Cases
+              <span className="ml-1.5 text-[11px] mono opacity-70">{data.stats.openMatters}</span>
+            </button>
+            <button
+              onClick={() => { setTab('archive'); setExpanded(null); }}
+              className={`pill ${tab === 'archive' ? 'pill-active' : ''}`}
+            >
+              Archive
+              <span className="ml-1.5 text-[11px] mono opacity-70">{data.stats.closedMatters.toLocaleString()}</span>
+            </button>
+          </div>
+
           {/* Filters */}
           <div className="flex flex-wrap gap-3 mb-5">
             <input
@@ -170,16 +190,6 @@ export default function AllMatters() {
               onChange={e => setSearch(e.target.value)}
               className="px-4 py-2.5 input-field flex-1 min-w-[200px]"
             />
-            <select
-              value={statusFilter}
-              onChange={e => setStatusFilter(e.target.value)}
-              className="px-3 py-2.5 select-field"
-            >
-              <option value="all">All Status</option>
-              <option value="Open">Open</option>
-              <option value="Closed">Closed</option>
-              <option value="Pending">Pending</option>
-            </select>
             <select
               value={areaFilter}
               onChange={e => setAreaFilter(e.target.value)}

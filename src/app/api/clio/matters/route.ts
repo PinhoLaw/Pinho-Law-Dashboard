@@ -4,6 +4,11 @@ import { clioGetAll } from '@/lib/clio';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
+// In-memory cache — survives across requests within the same serverless invocation
+// Cache for 5 minutes to avoid hammering Clio on every page load
+let cachedResponse: { data: string; fetchedAt: number } | null = null;
+const CACHE_TTL_MS = 5 * 60 * 1000; // 5 minutes
+
 interface ClioMatter {
   id: number;
   display_number: string;
@@ -71,21 +76,34 @@ export async function GET() {
       return NextResponse.json({ error: 'Clio not connected' }, { status: 400 });
     }
 
-    // Fetch matters, bills, and contacts in parallel
-    const [mattersRaw, billsRaw, contactsRaw] = await Promise.all([
-      clioGetAll('/matters', {
-        fields: 'id,display_number,description,status,open_date,close_date,billable,pending_date,client{id,name,type},responsible_attorney{name},practice_area{name}',
-        order: 'id(asc)',
-      }),
-      clioGetAll('/bills', {
-        fields: 'id,total,paid,pending,due,state,issued_at,number,matters{id,display_number}',
-        order: 'id(asc)',
-      }).catch(() => []),
-      clioGetAll('/contacts', {
-        fields: 'id,name,phone_numbers{name,number},email_addresses{name,address}',
-        type: 'Person',
-      }).catch(() => []),
-    ]);
+    // Return cached response if fresh (within 5 min)
+    if (cachedResponse && (Date.now() - cachedResponse.fetchedAt) < CACHE_TTL_MS) {
+      return new NextResponse(cachedResponse.data, {
+        headers: {
+          'Content-Type': 'application/json',
+          'X-Cache': 'HIT',
+          'X-Cache-Age': String(Math.round((Date.now() - cachedResponse.fetchedAt) / 1000)),
+        },
+      });
+    }
+
+    // Fetch matters, then bills, then contacts SEQUENTIALLY to avoid rate limits.
+    // Clio has a 50 req/min limit. Each dataset paginates ~14 pages.
+    // Running them in parallel would fire ~40 requests simultaneously = rate limit.
+    const mattersRaw = await clioGetAll('/matters', {
+      fields: 'id,display_number,description,status,open_date,close_date,billable,pending_date,client{id,name,type},responsible_attorney{name},practice_area{name}',
+      order: 'id(asc)',
+    });
+
+    const billsRaw = await clioGetAll('/bills', {
+      fields: 'id,total,paid,pending,due,state,issued_at,number,matters{id,display_number}',
+      order: 'id(asc)',
+    }).catch(() => []);
+
+    const contactsRaw = await clioGetAll('/contacts', {
+      fields: 'id,name,phone_numbers{name,number},email_addresses{name,address}',
+      type: 'Person',
+    }).catch(() => []);
 
     const matters = mattersRaw as unknown as ClioMatter[];
     const bills = billsRaw as unknown as ClioBill[];
@@ -193,7 +211,7 @@ export async function GET() {
       byArea[area].outstanding += m.totalOutstanding;
     }
 
-    return NextResponse.json({
+    const responseBody = {
       matters: enriched,
       stats: {
         totalMatters: enriched.length,
@@ -219,6 +237,14 @@ export async function GET() {
         openBills: bills.filter(b => b.state === 'open' || b.state === 'awaiting_payment').length,
       },
       fetchedAt: new Date().toISOString(),
+    };
+
+    // Cache the response for 5 minutes
+    const jsonStr = JSON.stringify(responseBody);
+    cachedResponse = { data: jsonStr, fetchedAt: Date.now() };
+
+    return new NextResponse(jsonStr, {
+      headers: { 'Content-Type': 'application/json', 'X-Cache': 'MISS' },
     });
   } catch (err: unknown) {
     const message = err instanceof Error ? err.message : 'Unknown error';
