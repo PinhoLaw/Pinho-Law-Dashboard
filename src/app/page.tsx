@@ -95,10 +95,9 @@ export default function Collections() {
   };
 
   const getAmountColor = (amount: number) => {
-    if (amount >= 10000) return '#F87171';
-    if (amount >= 5000) return '#FBBF24';
-    if (amount >= 1000) return '#FB923C';
-    return '#8A8A8E';
+    if (amount >= 5000) return '#FF3B30';
+    if (amount >= 1000) return '#FF9500';
+    return '#34C759';
   };
 
   const handleSort = (field: SortField) => {
@@ -118,25 +117,23 @@ export default function Collections() {
   return (
     <DashboardShell>
       <div className="mb-8">
-        <div className="flex items-baseline gap-3 mb-1">
-          <h1 className="font-display text-[32px] italic text-[#F0EDE6] tracking-tight">
-            Collections
-          </h1>
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#1D1D1F] mb-1">
+          Collections
+        </h1>
+        <p className="text-[13px] text-[#98989D]">
+          Outstanding balances across all open matters
           {data?.fetchedAt && (
-            <span className="text-[11px] text-[#3A3A3E] mono">
-              live from Clio
+            <span className="ml-2 text-[11px] text-[#C7C7CC]">
+              &middot; live from Clio
             </span>
           )}
-        </div>
-        <p className="text-[13px] text-[#5A5A5E]">
-          Outstanding balances across all open matters — directly from Clio
         </p>
       </div>
 
       {loading ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-5 gap-4">
-            {[1,2,3,4,5].map(i => <div key={i} className="h-28 loading-shimmer" />)}
+            {[1,2,3,4,5].map(i => <div key={i} className="h-24 loading-shimmer" />)}
           </div>
           <div className="h-96 loading-shimmer" />
         </div>
@@ -147,40 +144,35 @@ export default function Collections() {
               label="Total Outstanding"
               value={formatCompact(data.stats.totalOutstanding)}
               icon={DollarSign}
-              accent="#EF4444"
-              glowClass="stat-value-danger"
+              accent="#FF3B30"
               subtext={`across ${owingMatters.length} matters`}
             />
             <StatCard
               label="Clients Owing"
               value={data.stats.clientsOwing}
               icon={AlertTriangle}
-              accent="#F59E0B"
-              glowClass="stat-value-warning"
+              accent="#FF9500"
               subtext={`of ${data.stats.openMatters} open`}
             />
             <StatCard
               label="Total Collected"
               value={formatCompact(data.stats.totalPaid)}
               icon={TrendingUp}
-              accent="#10B981"
-              glowClass="stat-value-success"
+              accent="#34C759"
               subtext={`${formatCompact(data.stats.totalBilled)} billed`}
             />
             <StatCard
               label="Collection Rate"
               value={`${data.stats.collectionRate}%`}
               icon={Percent}
-              accent="#C9A84C"
-              glowClass="stat-value-brand"
+              accent="#007AFF"
               subtext="paid vs billed"
             />
             <StatCard
               label="Phone Coverage"
               value={`${data.stats.withPhone}`}
               icon={Phone}
-              accent="#3B82F6"
-              glowClass="stat-value-info"
+              accent="#AF52DE"
               subtext={`${data.stats.withoutPhone} missing`}
             />
           </div>
@@ -203,7 +195,7 @@ export default function Collections() {
                     <th className="text-left">Client</th>
                     <th className="text-left">Matter</th>
                     <th
-                      className="text-right cursor-pointer select-none hover:text-[#8A8A8E] transition-colors"
+                      className="text-right cursor-pointer select-none hover:text-[#6E6E73] transition-colors"
                       onClick={() => handleSort('totalOutstanding')}
                     >
                       <span className="inline-flex items-center gap-1">
@@ -211,7 +203,7 @@ export default function Collections() {
                       </span>
                     </th>
                     <th
-                      className="text-right cursor-pointer select-none hover:text-[#8A8A8E] transition-colors"
+                      className="text-right cursor-pointer select-none hover:text-[#6E6E73] transition-colors"
                       onClick={() => handleSort('totalPaid')}
                     >
                       <span className="inline-flex items-center gap-1">
@@ -220,7 +212,7 @@ export default function Collections() {
                     </th>
                     <th className="text-left">Area</th>
                     <th
-                      className="text-right cursor-pointer select-none hover:text-[#8A8A8E] transition-colors"
+                      className="text-right cursor-pointer select-none hover:text-[#6E6E73] transition-colors"
                       onClick={() => handleSort('daysOpen')}
                     >
                       <span className="inline-flex items-center gap-1">
@@ -234,11 +226,11 @@ export default function Collections() {
                   {owingMatters.map((m) => (
                     <tr key={m.id}>
                       <td>
-                        <p className="font-medium text-[#F0EDE6] text-[13px]">{m.clientName}</p>
-                        <p className="text-[11px] mono text-[#3A3A3E] mt-0.5">{m.displayNumber}</p>
+                        <p className="font-medium text-[#1D1D1F] text-[13px]">{m.clientName}</p>
+                        <p className="text-[11px] mono text-[#C7C7CC] mt-0.5">{m.displayNumber}</p>
                       </td>
                       <td>
-                        <p className="text-[13px] truncate max-w-[200px] text-[#8A8A8E]">
+                        <p className="text-[13px] truncate max-w-[200px] text-[#6E6E73]">
                           {m.description || '\u2014'}
                         </p>
                       </td>
@@ -251,20 +243,20 @@ export default function Collections() {
                         </span>
                       </td>
                       <td className="text-right">
-                        <span className="text-[13px] mono" style={{ color: m.totalPaid > 0 ? '#34D399' : '#3A3A3E' }}>
+                        <span className="text-[13px] mono" style={{ color: m.totalPaid > 0 ? '#34C759' : '#C7C7CC' }}>
                           {formatCurrency(m.totalPaid)}
                         </span>
                       </td>
                       <td>
                         {m.practiceArea && m.practiceArea !== 'Uncategorized' ? (
-                          <span className="badge badge-brand">{m.practiceArea}</span>
+                          <span className="badge badge-info">{m.practiceArea}</span>
                         ) : (
-                          <span className="text-[11px] text-[#3A3A3E]">{'\u2014'}</span>
+                          <span className="text-[11px] text-[#C7C7CC]">{'\u2014'}</span>
                         )}
                       </td>
                       <td className="text-right">
                         <span className="text-[13px] mono" style={{
-                          color: m.daysOpen > 365 ? '#F87171' : m.daysOpen > 180 ? '#FBBF24' : '#8A8A8E'
+                          color: m.daysOpen > 365 ? '#FF3B30' : m.daysOpen > 180 ? '#FF9500' : '#98989D'
                         }}>
                           {m.daysOpen}d
                         </span>
@@ -282,7 +274,7 @@ export default function Collections() {
                   ))}
                   {owingMatters.length === 0 && (
                     <tr>
-                      <td colSpan={7} className="text-center py-12 text-[#3A3A3E]">
+                      <td colSpan={7} className="text-center py-12 text-[#98989D]">
                         {search ? 'No results match your search' : 'No outstanding balances found'}
                       </td>
                     </tr>
@@ -293,19 +285,19 @@ export default function Collections() {
           </div>
 
           <div className="flex items-center justify-between mt-3">
-            <p className="text-[11px] text-[#3A3A3E]">
+            <p className="text-[11px] text-[#98989D]">
               {owingMatters.length} matters with outstanding balances
               {search && ` (filtered from ${data.stats.clientsOwing})`}
             </p>
-            <p className="text-[11px] text-[#3A3A3E] mono">
+            <p className="text-[11px] text-[#C7C7CC] mono">
               {data.fetchedAt ? new Date(data.fetchedAt).toLocaleTimeString() : ''}
             </p>
           </div>
         </>
       ) : (
         <div className="card p-8 text-center">
-          <p className="text-[#F87171] text-sm">Failed to load Clio data</p>
-          <p className="text-[#3A3A3E] text-xs mt-1">Check that Clio is connected and refresh</p>
+          <p className="text-[#FF3B30] text-sm">Failed to load Clio data</p>
+          <p className="text-[#98989D] text-xs mt-1">Check that Clio is connected and refresh the page</p>
         </div>
       )}
     </DashboardShell>

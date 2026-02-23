@@ -74,7 +74,6 @@ export default function AllMatters() {
   const filtered = useMemo(() => {
     return matters
       .filter(m => {
-        // Tab filter: open tab shows Open/Pending, archive shows Closed
         if (tab === 'open' && m.status === 'Closed') return false;
         if (tab === 'archive' && m.status !== 'Closed') return false;
         if (search) {
@@ -109,23 +108,19 @@ export default function AllMatters() {
   return (
     <DashboardShell>
       <div className="mb-8">
-        <div className="flex items-baseline gap-3 mb-1">
-          <h1 className="font-display text-[32px] italic text-[#F0EDE6] tracking-tight">
-            All Matters
-          </h1>
-          <span className="text-[11px] text-[#3A3A3E] mono">
-            {data ? `${data.stats.totalMatters} total` : ''}
-          </span>
-        </div>
-        <p className="text-[13px] text-[#5A5A5E]">
-          Complete case list from Clio — every matter, every dollar
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#1D1D1F] mb-1">
+          All Matters
+        </h1>
+        <p className="text-[13px] text-[#98989D]">
+          Complete case list from Clio
+          {data ? ` \u00B7 ${data.stats.totalMatters.toLocaleString()} total` : ''}
         </p>
       </div>
 
       {loading ? (
         <div className="space-y-4">
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4">
-            {[1,2,3,4].map(i => <div key={i} className="h-28 loading-shimmer" />)}
+            {[1,2,3,4].map(i => <div key={i} className="h-24 loading-shimmer" />)}
           </div>
           <div className="h-96 loading-shimmer" />
         </div>
@@ -136,29 +131,26 @@ export default function AllMatters() {
               label="Total Matters"
               value={data.stats.totalMatters.toLocaleString()}
               icon={FolderOpen}
-              accent="#3B82F6"
-              glowClass="stat-value-info"
+              accent="#007AFF"
             />
             <StatCard
               label="Open"
               value={data.stats.openMatters}
               icon={CheckCircle}
-              accent="#10B981"
-              glowClass="stat-value-success"
+              accent="#34C759"
               subtext={`${Math.round((data.stats.openMatters / data.stats.totalMatters) * 100)}% of total`}
             />
             <StatCard
               label="Closed"
               value={data.stats.closedMatters.toLocaleString()}
               icon={Clock}
-              accent="#5A5A5E"
+              accent="#98989D"
             />
             <StatCard
               label="With Balance"
               value={data.stats.clientsOwing}
               icon={AlertCircle}
-              accent="#F59E0B"
-              glowClass="stat-value-warning"
+              accent="#FF9500"
               subtext={formatCompact(data.stats.totalOutstanding)}
             />
           </div>
@@ -227,18 +219,18 @@ export default function AllMatters() {
                       >
                         <td className="!pr-0">
                           {expanded === m.id
-                            ? <ChevronDown size={14} className="text-[#5A5A5E]" />
-                            : <ChevronRight size={14} className="text-[#3A3A3E]" />
+                            ? <ChevronDown size={14} className="text-[#98989D]" />
+                            : <ChevronRight size={14} className="text-[#C7C7CC]" />
                           }
                         </td>
                         <td>
-                          <span className="mono text-[12px] text-[#60A5FA]">{m.displayNumber}</span>
+                          <span className="mono text-[12px] text-[#007AFF]">{m.displayNumber}</span>
                         </td>
                         <td>
-                          <span className="font-medium text-[#F0EDE6]">{m.clientName}</span>
+                          <span className="font-medium text-[#1D1D1F]">{m.clientName}</span>
                         </td>
                         <td>
-                          <span className="text-[13px] truncate block max-w-[220px] text-[#8A8A8E]">
+                          <span className="text-[13px] truncate block max-w-[220px] text-[#6E6E73]">
                             {m.description || '\u2014'}
                           </span>
                         </td>
@@ -249,42 +241,42 @@ export default function AllMatters() {
                           {m.practiceArea && m.practiceArea !== 'Uncategorized' ? (
                             <span className="badge badge-brand">{m.practiceArea}</span>
                           ) : (
-                            <span className="text-[12px] text-[#3A3A3E]">{'\u2014'}</span>
+                            <span className="text-[12px] text-[#C7C7CC]">{'\u2014'}</span>
                           )}
                         </td>
                         <td className="text-right">
                           <span className="text-[13px] mono" style={{
-                            color: m.totalOutstanding > 0 ? '#F87171' : '#3A3A3E'
+                            color: m.totalOutstanding > 0 ? '#FF3B30' : '#C7C7CC'
                           }}>
                             {formatCurrency(m.totalOutstanding)}
                           </span>
                         </td>
                         <td className="text-right">
                           <span className="text-[13px] mono" style={{
-                            color: m.totalPaid > 0 ? '#34D399' : '#3A3A3E'
+                            color: m.totalPaid > 0 ? '#34C759' : '#C7C7CC'
                           }}>
                             {formatCurrency(m.totalPaid)}
                           </span>
                         </td>
                         <td className="text-right">
-                          <span className="text-[13px] mono text-[#8A8A8E]">
+                          <span className="text-[13px] mono text-[#6E6E73]">
                             {formatCurrency(m.totalBilled)}
                           </span>
                         </td>
                         <td>
-                          <span className="text-[12px] text-[#5A5A5E]">{m.openDate || '\u2014'}</span>
+                          <span className="text-[12px] text-[#98989D]">{m.openDate || '\u2014'}</span>
                         </td>
                       </tr>
 
                       {/* Expanded detail row */}
                       {expanded === m.id && (
                         <tr>
-                          <td colSpan={10} style={{ background: '#161618', padding: '20px 24px' }}>
+                          <td colSpan={10} className="!bg-[#F5F5F7] !p-5">
                             <div className="grid grid-cols-2 md:grid-cols-4 lg:grid-cols-6 gap-5 animate-fade-in">
                               <div>
                                 <p className="detail-label">Days Open</p>
                                 <p className="detail-value mono" style={{
-                                  color: m.daysOpen > 365 ? '#F87171' : m.daysOpen > 180 ? '#FBBF24' : '#F0EDE6'
+                                  color: m.daysOpen > 365 ? '#FF3B30' : m.daysOpen > 180 ? '#FF9500' : '#1D1D1F'
                                 }}>
                                   {m.daysOpen} days
                                 </p>
@@ -308,7 +300,7 @@ export default function AllMatters() {
                                     <span className="mono text-[12px]">
                                       #{m.lastInvoiceNumber}
                                       {m.lastInvoiceDate && (
-                                        <span className="text-[#5A5A5E] ml-1">
+                                        <span className="text-[#98989D] ml-1">
                                           ({m.lastInvoiceDate})
                                         </span>
                                       )}
@@ -327,11 +319,11 @@ export default function AllMatters() {
                                 <p className="detail-value flex items-center gap-1.5">
                                   {m.phone ? (
                                     <>
-                                      <PhoneIcon size={12} className="text-[#34D399]" />
+                                      <PhoneIcon size={12} className="text-[#34C759]" />
                                       <span className="mono text-[12px]">{m.phone}</span>
                                     </>
                                   ) : (
-                                    <span className="text-[#F87171] text-[12px]">Missing</span>
+                                    <span className="text-[#FF3B30] text-[12px]">Missing</span>
                                   )}
                                 </p>
                               </div>
@@ -340,11 +332,11 @@ export default function AllMatters() {
                                 <p className="detail-value flex items-center gap-1.5">
                                   {m.email ? (
                                     <>
-                                      <Mail size={12} className="text-[#60A5FA]" />
+                                      <Mail size={12} className="text-[#007AFF]" />
                                       <span className="text-[12px] truncate max-w-[180px]">{m.email}</span>
                                     </>
                                   ) : (
-                                    <span className="text-[#5A5A5E] text-[12px]">{'\u2014'}</span>
+                                    <span className="text-[#98989D] text-[12px]">{'\u2014'}</span>
                                   )}
                                 </p>
                               </div>
@@ -365,14 +357,14 @@ export default function AllMatters() {
             </div>
           </div>
 
-          <p className="text-[11px] mt-3 text-[#3A3A3E]">
+          <p className="text-[11px] mt-3 text-[#98989D]">
             Showing {filtered.length} of {matters.length} matters
             {'\u00A0\u00B7\u00A0'}Click a row for details
           </p>
         </>
       ) : (
         <div className="card p-8 text-center">
-          <p className="text-[#F87171] text-sm">Failed to load matters from Clio</p>
+          <p className="text-[#FF3B30] text-sm">Failed to load matters from Clio</p>
         </div>
       )}
     </DashboardShell>

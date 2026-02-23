@@ -67,7 +67,6 @@ export default function TeamWorkload() {
   const maxOutstanding = useMemo(() => Math.max(...team.map(t => t.outstanding), 1), [team]);
   const maxAreaCount = useMemo(() => Math.max(...areas.map(a => a.count), 1), [areas]);
 
-  // Group matters by attorney for expanded view
   const mattersByAttorney = useMemo(() => {
     if (!data?.matters) return new Map<string, EnrichedMatter[]>();
     const map = new Map<string, EnrichedMatter[]>();
@@ -76,7 +75,6 @@ export default function TeamWorkload() {
       if (!map.has(atty)) map.set(atty, []);
       map.get(atty)!.push(m);
     }
-    // Sort each attorney's matters by outstanding desc
     for (const [, matters] of map) {
       matters.sort((a, b) => b.totalOutstanding - a.totalOutstanding);
     }
@@ -95,12 +93,10 @@ export default function TeamWorkload() {
   return (
     <DashboardShell>
       <div className="mb-8">
-        <div className="flex items-baseline gap-3 mb-1">
-          <h1 className="font-display text-[32px] italic text-[#F0EDE6] tracking-tight">
-            Team Workload
-          </h1>
-        </div>
-        <p className="text-[13px] text-[#5A5A5E]">
+        <h1 className="text-[22px] font-semibold tracking-tight text-[#1D1D1F] mb-1">
+          Team Workload
+        </h1>
+        <p className="text-[13px] text-[#98989D]">
           Open matters and billing grouped by responsible attorney and practice area
         </p>
       </div>
@@ -111,12 +107,12 @@ export default function TeamWorkload() {
         </div>
       ) : data ? (
         <div className="grid grid-cols-1 xl:grid-cols-3 gap-6">
-          {/* Attorney cards — 2/3 width */}
+          {/* Attorney cards */}
           <div className="xl:col-span-2 space-y-3 stagger-children">
             <div className="flex items-center gap-2 mb-4">
-              <Users size={16} className="text-[#C9A84C]" />
-              <h2 className="text-[15px] font-semibold text-[#F0EDE6]">By Attorney</h2>
-              <span className="text-[11px] text-[#3A3A3E] mono ml-auto">
+              <Users size={16} className="text-[#B8860B]" />
+              <h2 className="text-[15px] font-semibold text-[#1D1D1F]">By Attorney</h2>
+              <span className="text-[11px] text-[#C7C7CC] mono ml-auto">
                 {team.length} attorneys
               </span>
             </div>
@@ -127,7 +123,7 @@ export default function TeamWorkload() {
               return (
                 <div key={member.name} className="card overflow-hidden">
                   <div
-                    className="p-5 cursor-pointer transition-colors hover:bg-[rgba(255,255,255,0.02)]"
+                    className="p-5 cursor-pointer transition-colors hover:bg-[#F9F9FB]"
                     onClick={() => setExpanded(expanded === member.name ? null : member.name)}
                   >
                     <div className="flex items-start justify-between mb-4">
@@ -136,33 +132,30 @@ export default function TeamWorkload() {
                           className="w-10 h-10 rounded-xl flex items-center justify-center text-[13px] font-bold"
                           style={{
                             background: member.name === 'Unassigned'
-                              ? 'rgba(239,68,68,0.08)'
-                              : 'linear-gradient(135deg, rgba(201,168,76,0.12) 0%, rgba(201,168,76,0.04) 100%)',
-                            color: member.name === 'Unassigned' ? '#F87171' : '#DFBF6F',
-                            border: `1px solid ${member.name === 'Unassigned' ? 'rgba(239,68,68,0.12)' : 'rgba(201,168,76,0.12)'}`,
+                              ? 'rgba(255,59,48,0.06)'
+                              : 'rgba(184,134,11,0.08)',
+                            color: member.name === 'Unassigned' ? '#FF3B30' : '#B8860B',
+                            border: `1px solid ${member.name === 'Unassigned' ? 'rgba(255,59,48,0.1)' : 'rgba(184,134,11,0.12)'}`,
                           }}
                         >
                           {member.name.split(' ').map(w => w[0]).join('').slice(0, 2)}
                         </div>
                         <div>
-                          <h3 className="font-semibold text-[15px] text-[#F0EDE6]">
+                          <h3 className="font-semibold text-[15px] text-[#1D1D1F]">
                             {member.name}
                           </h3>
-                          <p className="text-[11px] text-[#5A5A5E]">
+                          <p className="text-[11px] text-[#98989D]">
                             {member.count} open matter{member.count !== 1 ? 's' : ''}
                           </p>
                         </div>
                       </div>
                       <div className="text-right">
                         <p className="text-[18px] font-bold mono" style={{
-                          color: member.outstanding > 0 ? '#F87171' : '#34D399',
-                          textShadow: member.outstanding > 0
-                            ? '0 0 30px rgba(248,113,113,0.2)'
-                            : '0 0 30px rgba(52,211,153,0.2)',
+                          color: member.outstanding > 0 ? '#FF3B30' : '#34C759'
                         }}>
                           {formatCompact(member.outstanding)}
                         </p>
-                        <p className="text-[10px] text-[#5A5A5E] uppercase tracking-wider">outstanding</p>
+                        <p className="text-[10px] text-[#98989D] uppercase tracking-wider">outstanding</p>
                       </div>
                     </div>
 
@@ -170,27 +163,27 @@ export default function TeamWorkload() {
                     <div className="grid grid-cols-2 gap-4">
                       <div>
                         <div className="flex justify-between text-[10px] mb-1.5">
-                          <span className="text-[#5A5A5E] flex items-center gap-1 uppercase tracking-wider font-semibold">
+                          <span className="text-[#98989D] flex items-center gap-1 uppercase tracking-wider font-semibold">
                             <FolderOpen size={10} /> Matters
                           </span>
-                          <span className="text-[#8A8A8E] mono">{member.count}</span>
+                          <span className="text-[#6E6E73] mono">{member.count}</span>
                         </div>
                         <div className="progress-track">
                           <div
                             className="progress-bar"
                             style={{
                               width: `${(member.count / maxMatters) * 100}%`,
-                              background: 'linear-gradient(90deg, #3B82F6, #60A5FA)',
+                              background: 'linear-gradient(90deg, #007AFF, #5AC8FA)',
                             }}
                           />
                         </div>
                       </div>
                       <div>
                         <div className="flex justify-between text-[10px] mb-1.5">
-                          <span className="text-[#5A5A5E] flex items-center gap-1 uppercase tracking-wider font-semibold">
+                          <span className="text-[#98989D] flex items-center gap-1 uppercase tracking-wider font-semibold">
                             <DollarSign size={10} /> Collected
                           </span>
-                          <span className="text-[#34D399] mono">{formatCompact(member.paid)}</span>
+                          <span className="text-[#34C759] mono">{formatCompact(member.paid)}</span>
                         </div>
                         <div className="progress-track">
                           <div
@@ -198,10 +191,10 @@ export default function TeamWorkload() {
                             style={{
                               width: `${member.outstanding > 0 ? (member.outstanding / maxOutstanding) * 100 : 0}%`,
                               background: member.outstanding > 10000
-                                ? 'linear-gradient(90deg, #EF4444, #F87171)'
+                                ? 'linear-gradient(90deg, #FF3B30, #FF6961)'
                                 : member.outstanding > 0
-                                ? 'linear-gradient(90deg, #F59E0B, #FBBF24)'
-                                : 'linear-gradient(90deg, #10B981, #34D399)',
+                                ? 'linear-gradient(90deg, #FF9500, #FFCC00)'
+                                : 'linear-gradient(90deg, #34C759, #30D158)',
                             }}
                           />
                         </div>
@@ -211,7 +204,7 @@ export default function TeamWorkload() {
 
                   {/* Expanded matters */}
                   {expanded === member.name && memberMatters.length > 0 && (
-                    <div style={{ borderTop: '1px solid rgba(255,255,255,0.04)' }}>
+                    <div style={{ borderTop: '1px solid #E5E5EA' }}>
                       <div className="overflow-x-auto animate-fade-in">
                         <table className="data-table">
                           <thead>
@@ -227,29 +220,29 @@ export default function TeamWorkload() {
                           <tbody>
                             {memberMatters.slice(0, 20).map(m => (
                               <tr key={m.id}>
-                                <td><span className="mono text-[12px] text-[#60A5FA]">{m.displayNumber}</span></td>
-                                <td><span className="text-[#F0EDE6]">{m.clientName}</span></td>
+                                <td><span className="mono text-[12px] text-[#007AFF]">{m.displayNumber}</span></td>
+                                <td><span className="text-[#1D1D1F]">{m.clientName}</span></td>
                                 <td>
                                   {m.practiceArea && m.practiceArea !== 'Uncategorized' ? (
                                     <span className="badge badge-brand">{m.practiceArea}</span>
                                   ) : (
-                                    <span className="text-[#3A3A3E]">{'\u2014'}</span>
+                                    <span className="text-[#C7C7CC]">{'\u2014'}</span>
                                   )}
                                 </td>
                                 <td className="text-right">
                                   <span className="mono text-[13px]" style={{
-                                    color: m.totalOutstanding > 0 ? '#F87171' : '#3A3A3E'
+                                    color: m.totalOutstanding > 0 ? '#FF3B30' : '#C7C7CC'
                                   }}>
                                     {formatCurrency(m.totalOutstanding)}
                                   </span>
                                 </td>
                                 <td className="text-right">
-                                  <span className="mono text-[13px] text-[#34D399]">
+                                  <span className="mono text-[13px] text-[#34C759]">
                                     {formatCurrency(m.totalPaid)}
                                   </span>
                                 </td>
                                 <td className="text-center">
-                                  <span style={{ color: m.phone ? '#34D399' : '#F87171', fontSize: '0.75rem' }}>
+                                  <span style={{ color: m.phone ? '#34C759' : '#FF3B30', fontSize: '0.75rem' }}>
                                     {m.phone ? '\u2713' : '\u2717'}
                                   </span>
                                 </td>
@@ -257,7 +250,7 @@ export default function TeamWorkload() {
                             ))}
                             {memberMatters.length > 20 && (
                               <tr>
-                                <td colSpan={6} className="text-center text-[11px] text-[#5A5A5E] py-3">
+                                <td colSpan={6} className="text-center text-[11px] text-[#98989D] py-3">
                                   + {memberMatters.length - 20} more matters
                                 </td>
                               </tr>
@@ -272,23 +265,23 @@ export default function TeamWorkload() {
             })}
           </div>
 
-          {/* Practice area sidebar — 1/3 width */}
+          {/* Practice area sidebar */}
           <div className="space-y-3">
             <div className="flex items-center gap-2 mb-4">
-              <BarChart3 size={16} className="text-[#C9A84C]" />
-              <h2 className="text-[15px] font-semibold text-[#F0EDE6]">By Practice Area</h2>
+              <BarChart3 size={16} className="text-[#B8860B]" />
+              <h2 className="text-[15px] font-semibold text-[#1D1D1F]">By Practice Area</h2>
             </div>
 
             {areas.map((area, i) => (
               <div key={area.name} className="card p-4" style={{ animationDelay: `${i * 0.04}s` }}>
                 <div className="flex items-center justify-between mb-3">
-                  <h3 className="text-[13px] font-medium text-[#F0EDE6]">{area.name}</h3>
-                  <span className="text-[11px] mono text-[#8A8A8E]">{area.count} matters</span>
+                  <h3 className="text-[13px] font-medium text-[#1D1D1F]">{area.name}</h3>
+                  <span className="text-[11px] mono text-[#98989D]">{area.count} matters</span>
                 </div>
                 <div className="flex items-center justify-between mb-2">
-                  <span className="text-[10px] text-[#5A5A5E] uppercase tracking-wider font-semibold">Outstanding</span>
+                  <span className="text-[10px] text-[#98989D] uppercase tracking-wider font-semibold">Outstanding</span>
                   <span className="text-[13px] mono" style={{
-                    color: area.outstanding > 0 ? '#F87171' : '#3A3A3E'
+                    color: area.outstanding > 0 ? '#FF3B30' : '#C7C7CC'
                   }}>
                     {formatCompact(area.outstanding)}
                   </span>
@@ -298,7 +291,7 @@ export default function TeamWorkload() {
                     className="progress-bar"
                     style={{
                       width: `${(area.count / maxAreaCount) * 100}%`,
-                      background: 'linear-gradient(90deg, rgba(201,168,76,0.5), rgba(223,191,111,0.3))',
+                      background: 'linear-gradient(90deg, rgba(184,134,11,0.5), rgba(212,160,23,0.3))',
                     }}
                   />
                 </div>
@@ -309,34 +302,34 @@ export default function TeamWorkload() {
             <div className="card-brand p-5 mt-4">
               <div className="relative z-10">
                 <div className="flex items-center gap-2 mb-3">
-                  <TrendingUp size={14} className="text-[#C9A84C]" />
-                  <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[#DFBF6F]">
+                  <TrendingUp size={14} className="text-[#B8860B]" />
+                  <h3 className="text-[12px] font-semibold uppercase tracking-wider text-[#B8860B]">
                     Firm Totals
                   </h3>
                 </div>
                 <div className="space-y-2.5">
                   <div className="flex justify-between">
-                    <span className="text-[12px] text-[#8A8A8E]">Total Billed</span>
-                    <span className="mono text-[13px] text-[#F0EDE6]">
+                    <span className="text-[12px] text-[#6E6E73]">Total Billed</span>
+                    <span className="mono text-[13px] text-[#1D1D1F]">
                       {formatCompact(data?.stats.totalBilled || 0)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[12px] text-[#8A8A8E]">Total Collected</span>
-                    <span className="mono text-[13px] text-[#34D399]">
+                    <span className="text-[12px] text-[#6E6E73]">Total Collected</span>
+                    <span className="mono text-[13px] text-[#34C759]">
                       {formatCompact(data?.stats.totalPaid || 0)}
                     </span>
                   </div>
                   <div className="flex justify-between">
-                    <span className="text-[12px] text-[#8A8A8E]">Outstanding</span>
-                    <span className="mono text-[13px] text-[#F87171]">
+                    <span className="text-[12px] text-[#6E6E73]">Outstanding</span>
+                    <span className="mono text-[13px] text-[#FF3B30]">
                       {formatCompact(data?.stats.totalOutstanding || 0)}
                     </span>
                   </div>
-                  <div className="h-px my-1" style={{ background: 'rgba(201,168,76,0.15)' }} />
+                  <div className="h-px my-1 bg-[#E5E5EA]" />
                   <div className="flex justify-between">
-                    <span className="text-[12px] text-[#DFBF6F] font-semibold">Collection Rate</span>
-                    <span className="mono text-[14px] font-bold text-[#DFBF6F]">
+                    <span className="text-[12px] text-[#B8860B] font-semibold">Collection Rate</span>
+                    <span className="mono text-[14px] font-bold text-[#B8860B]">
                       {data?.stats.collectionRate || 0}%
                     </span>
                   </div>
@@ -347,7 +340,7 @@ export default function TeamWorkload() {
         </div>
       ) : (
         <div className="card p-8 text-center">
-          <p className="text-[#F87171] text-sm">Failed to load team data from Clio</p>
+          <p className="text-[#FF3B30] text-sm">Failed to load team data from Clio</p>
         </div>
       )}
     </DashboardShell>

@@ -192,6 +192,43 @@ export async function clioGetAll(path: string, params: Record<string, string> = 
 }
 
 /**
+ * Make an authenticated POST request to Clio API v4.
+ * Includes automatic retry on 429 rate limit errors.
+ */
+export async function clioPost(
+  path: string,
+  body: Record<string, unknown>,
+  retries = 3
+): Promise<Record<string, unknown>> {
+  const token = await getAccessToken();
+  const url = `${CLIO_API_BASE}${path}`;
+
+  const res = await fetch(url, {
+    method: 'POST',
+    headers: {
+      Authorization: `Bearer ${token}`,
+      'Content-Type': 'application/json',
+    },
+    body: JSON.stringify(body),
+  });
+
+  if (res.status === 429 && retries > 0) {
+    const retryHeader = res.headers.get('Retry-After');
+    const waitSeconds = retryHeader ? parseInt(retryHeader, 10) : 20;
+    console.log(`[Clio] Rate limited on POST. Waiting ${waitSeconds}s (${retries} retries left)...`);
+    await sleep(waitSeconds * 1000);
+    return clioPost(path, body, retries - 1);
+  }
+
+  if (!res.ok) {
+    const text = await res.text();
+    throw new Error(`Clio API POST ${res.status}: ${text}`);
+  }
+
+  return res.json() as Promise<Record<string, unknown>>;
+}
+
+/**
  * Get the Clio authorization URL for the OAuth2 flow
  */
 export function getAuthorizationUrl(): string {
