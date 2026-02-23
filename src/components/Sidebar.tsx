@@ -19,7 +19,7 @@ import { useState } from 'react';
 const navItems = [
   { href: '/', label: 'Collections', icon: DollarSign, description: 'Who owes money' },
   { href: '/matters', label: 'All Matters', icon: FolderOpen, description: 'Full case list' },
-  { href: '/workload', label: 'Team', icon: Users, description: 'Attorney workload' },
+  { href: '/workload', label: 'Overview', icon: Users, description: 'Firm overview' },
   { href: '/whatsapp', label: 'WhatsApp', icon: MessageCircle, description: 'Client comms' },
   { href: '/sunbiz', label: 'Sunbiz', icon: Building2, description: 'Entity tracking' },
 ];
