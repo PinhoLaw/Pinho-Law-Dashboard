@@ -1,0 +1,65 @@
+{
+  "last_updated": "2026-02-24T05:28:31.059Z",
+  "version": "1.0",
+  "sop_version": "PinhoLaw SOP v1.0",
+  "summary": {
+    "total_promises": 3,
+    "open": 2,
+    "fulfilled": 1,
+    "broken": 0,
+    "at_risk": 1
+  },
+  "promises": [
+    {
+      "id": "PROM-001",
+      "client": "Roberto Mendes",
+      "clio_matter_id": "1001",
+      "promise": "File motion for summary judgment by March 10",
+      "promised_by": "Guillerme",
+      "promised_to": "Roberto Mendes",
+      "channel": "WhatsApp",
+      "date_made": "2026-02-20",
+      "deadline": "2026-03-10",
+      "status": "Open",
+      "at_risk": false,
+      "notes": "Discussed during deposition debrief call",
+      "escalation_history": []
+    },
+    {
+      "id": "PROM-002",
+      "client": "Dr. Fernanda Oliveira",
+      "clio_matter_id": "1002",
+      "promise": "Submit I-140 petition by March 5",
+      "promised_by": "Daniel",
+      "promised_to": "Dr. Fernanda Oliveira",
+      "channel": "Email",
+      "date_made": "2026-02-15",
+      "deadline": "2026-03-05",
+      "status": "Open",
+      "at_risk": true,
+      "notes": "Still waiting on one more recommendation letter. May need extension.",
+      "escalation_history": [
+        {
+          "date": "2026-02-22",
+          "level": 1,
+          "action": "Notified Inez about approaching deadline"
+        }
+      ]
+    },
+    {
+      "id": "PROM-003",
+      "client": "TechBridge Solutions Inc.",
+      "clio_matter_id": "1003",
+      "promise": "Send draft operating agreement for review by Feb 28",
+      "promised_by": "Guillerme",
+      "promised_to": "Lucas Ferreira (TechBridge CEO)",
+      "channel": "Phone",
+      "date_made": "2026-02-21",
+      "deadline": "2026-02-28",
+      "status": "Fulfilled",
+      "at_risk": false,
+      "notes": "Draft sent ahead of schedule on Feb 24",
+      "escalation_history": []
+    }
+  ]
+}
