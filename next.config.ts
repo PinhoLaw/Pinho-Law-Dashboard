@@ -11,7 +11,7 @@ const nextConfig: NextConfig = {
   typescript: {
     ignoreBuildErrors: false,
   },
-  serverExternalPackages: ['googleapis'],
+  serverExternalPackages: ['googleapis', '@langchain/langgraph', '@langchain/anthropic', '@langchain/core', '@octokit/rest'],
 };
 
 export default nextConfig;
