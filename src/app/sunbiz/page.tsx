@@ -49,7 +49,7 @@ export default function SunbizPage() {
           </div>
           <div className="h-96 loading-shimmer" />
         </div>
-      ) : data ? (
+      ) : data && data.stats ? (
         <>
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
             <StatCard label="Total Entities" value={data.count} icon={Building2} accent="#AF52DE" />

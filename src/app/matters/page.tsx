@@ -278,7 +278,7 @@ export default function AllMatters() {
         </h1>
         <p className="text-[13px] text-[#98989D]">
           Manage and filter your complete case list
-          {data ? ` \u00B7 ${data.stats.totalMatters.toLocaleString()} total` : ''}
+          {data?.stats ? ` \u00B7 ${data.stats.totalMatters.toLocaleString()} total` : ''}
         </p>
       </div>
 
@@ -289,7 +289,7 @@ export default function AllMatters() {
           </div>
           <div className="h-96 loading-shimmer" />
         </div>
-      ) : data ? (
+      ) : data && data.matters ? (
         <>
           {/* Stat Cards */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-6 stagger-children">
@@ -304,7 +304,7 @@ export default function AllMatters() {
               value={data.stats.openMatters}
               icon={CheckCircle}
               accent="#34C759"
-              subtext={`${Math.round((data.stats.openMatters / data.stats.totalMatters) * 100)}% of total`}
+              subtext={`${data.stats.totalMatters > 0 ? Math.round((data.stats.openMatters / data.stats.totalMatters) * 100) : 0}% of total`}
             />
             <StatCard
               label="Closed"

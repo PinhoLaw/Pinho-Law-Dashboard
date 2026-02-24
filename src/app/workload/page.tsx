@@ -185,7 +185,7 @@ export default function TeamWorkload() {
           Firm Overview
         </h1>
         <p className="text-[13px] text-[#98989D]">
-          Operational snapshot across all {data?.stats.openMatters || 0} open matters
+          Operational snapshot across all {data?.stats?.openMatters || 0} open matters
           {data?.fetchedAt && (
             <span className="ml-2 text-[11px] text-[#C7C7CC]">
               &middot; live from Clio
@@ -203,7 +203,7 @@ export default function TeamWorkload() {
             {[1,2,3,4].map(i => <div key={i} className="h-64 loading-shimmer" />)}
           </div>
         </div>
-      ) : data ? (
+      ) : data && data.matters ? (
         <>
           {/* Stat Cards Row */}
           <div className="grid grid-cols-2 lg:grid-cols-4 gap-4 mb-8 stagger-children">
@@ -230,7 +230,7 @@ export default function TeamWorkload() {
             />
             <StatCard
               label="Phone Coverage"
-              value={`${Math.round((data.stats.withPhone / data.stats.openMatters) * 100)}%`}
+              value={`${data.stats.openMatters > 0 ? Math.round((data.stats.withPhone / data.stats.openMatters) * 100) : 0}%`}
               icon={Phone}
               accent="#AF52DE"
               subtext={`${data.stats.withoutPhone} missing`}

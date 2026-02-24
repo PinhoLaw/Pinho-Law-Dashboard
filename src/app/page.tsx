@@ -185,7 +185,7 @@ export default function Collections() {
           <div className="h-16 loading-shimmer" />
           <div className="h-96 loading-shimmer" />
         </div>
-      ) : data ? (
+      ) : data && data.matters ? (
         <>
           {/* Summary bar */}
           <div className="card p-4 mb-5">
