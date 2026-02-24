@@ -102,6 +102,7 @@ export async function GET() {
       'create_execution_block',
       'sync_billing_to_clio',
       'get_billing_sync_status',
+      'send_whatsapp',
     ],
     status: 'operational',
     timestamp: new Date().toISOString(),
