@@ -1,0 +1,150 @@
+{
+  "last_updated": "2026-02-24T05:28:31.059Z",
+  "version": "1.0",
+  "sop_version": "PinhoLaw SOP v1.0",
+  "summary": {
+    "total_outstanding": 14525,
+    "total_paid": 11000,
+    "total_billable_hours": 42.5,
+    "clients_with_balance": 2,
+    "total_matters": 3
+  },
+  "matters": [
+    {
+      "clio_matter_id": "1001",
+      "client": "Roberto Mendes",
+      "matter_name": "Mendes v. Apex Properties LLC — Breach of Contract",
+      "responsible_attorney": "Guillerme",
+      "billing_type": "Hourly",
+      "contrato_clio": "CLO-1001",
+      "total_paid": 7000,
+      "total_outstanding": 8750,
+      "total_billable_hours": 25,
+      "total_nonbillable_hours": 3,
+      "days_since_payment": 18,
+      "followup_needed": false,
+      "followup_prompt": "",
+      "time_entries": [
+        {
+          "id": "TE-001",
+          "date": "2026-02-20",
+          "attorney": "Guillerme",
+          "hours": 3.5,
+          "rate": 350,
+          "amount": 1225,
+          "type": "Billable",
+          "description": "Deposition preparation and witness examination — Apex Properties",
+          "approval_status": "Approved",
+          "approved_by": "Guillerme",
+          "approved_at": "2026-02-20T18:00:00Z",
+          "clio_time_entry_id": null
+        },
+        {
+          "id": "TE-002",
+          "date": "2026-02-18",
+          "attorney": "Mariana",
+          "hours": 2,
+          "rate": 150,
+          "amount": 300,
+          "type": "Billable",
+          "description": "Document review and exhibit organization for depositions",
+          "approval_status": "Approved",
+          "approved_by": "Guillerme",
+          "approved_at": "2026-02-19T10:00:00Z",
+          "clio_time_entry_id": null
+        }
+      ],
+      "payments": [
+        {
+          "id": "PAY-001",
+          "date": "2026-02-05",
+          "amount": 3500,
+          "method": "Wire",
+          "reference": "WR-20260205-Mendes",
+          "notes": "Retainer replenishment"
+        },
+        {
+          "id": "PAY-002",
+          "date": "2026-01-10",
+          "amount": 3500,
+          "method": "Wire",
+          "reference": "WR-20260110-Mendes",
+          "notes": "Initial retainer"
+        }
+      ]
+    },
+    {
+      "clio_matter_id": "1002",
+      "client": "Dr. Fernanda Oliveira",
+      "matter_name": "Oliveira EB-2 NIW Immigration Petition",
+      "responsible_attorney": "Daniel",
+      "billing_type": "Flat Fee",
+      "contrato_clio": "CLO-1002",
+      "total_paid": 4000,
+      "total_outstanding": 3500,
+      "total_billable_hours": 12.5,
+      "total_nonbillable_hours": 1,
+      "days_since_payment": 25,
+      "followup_needed": false,
+      "followup_prompt": "",
+      "time_entries": [
+        {
+          "id": "TE-003",
+          "date": "2026-02-22",
+          "attorney": "Inez",
+          "hours": 4,
+          "rate": 150,
+          "amount": 600,
+          "type": "Billable",
+          "description": "Compiled expert recommendation letters and drafted I-140 support brief",
+          "approval_status": "Draft",
+          "approved_by": "",
+          "approved_at": "",
+          "clio_time_entry_id": null
+        }
+      ],
+      "payments": [
+        {
+          "id": "PAY-003",
+          "date": "2026-01-28",
+          "amount": 4000,
+          "method": "Credit Card",
+          "reference": "CC-20260128-Oliveira",
+          "notes": "Flat fee installment 1 of 2"
+        }
+      ]
+    },
+    {
+      "clio_matter_id": "1003",
+      "client": "TechBridge Solutions Inc.",
+      "matter_name": "TechBridge — Florida LLC Formation & Operating Agreement",
+      "responsible_attorney": "Guillerme",
+      "billing_type": "Flat Fee",
+      "contrato_clio": "CLO-1003",
+      "total_paid": 0,
+      "total_outstanding": 2275,
+      "total_billable_hours": 5,
+      "total_nonbillable_hours": 0.5,
+      "days_since_payment": 0,
+      "followup_needed": true,
+      "followup_prompt": "Olá Lucas, tudo bem? Aqui é da Equipe PinhoLaw. Gostaríamos de confirmar o pagamento referente à formação da LLC da TechBridge Solutions no valor de $2,275. Podemos agendar uma conversa para discutir os próximos passos? Aguardamos seu retorno. Equipe PinhoLaw",
+      "time_entries": [
+        {
+          "id": "TE-004",
+          "date": "2026-02-21",
+          "attorney": "Mariana",
+          "hours": 3,
+          "rate": 150,
+          "amount": 450,
+          "type": "Billable",
+          "description": "Drafted Articles of Organization and initial operating agreement template",
+          "approval_status": "Pending Approval",
+          "approved_by": "",
+          "approved_at": "",
+          "clio_time_entry_id": null
+        }
+      ],
+      "payments": []
+    }
+  ]
+}
