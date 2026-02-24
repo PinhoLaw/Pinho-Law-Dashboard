@@ -13,6 +13,8 @@ import { ChatAnthropic } from '@langchain/anthropic';
 import { HumanMessage, SystemMessage } from '@langchain/core/messages';
 import { readState, STATE_FILES } from '@/lib/ops/github';
 import type { PinhoOpsStateType } from '@/lib/ops/pinhoops/state';
+import { SUPERVISOR_PROMPT, AGENT_PROMPTS } from '@/lib/ops/pinhoops/prompts/supervisor';
+import { opsLog } from '@/lib/ops/pinhoops/logger';
 
 // ─── LLM ─────────────────────────────────────────────────
 
@@ -24,26 +26,26 @@ const llm = new ChatAnthropic({
 
 // ─── Supervisor Node ─────────────────────────────────────
 
-const SUPERVISOR_SYSTEM = `You are the PinhoOps AI Supervisor for Pinho Law (Orlando, FL).
-You receive WhatsApp messages and route them to the correct specialist agent.
-
-ROUTING RULES:
-- Task/matter status, lifecycle, daily briefing → masterOperations
-- Calendar, scheduling, availability, execution blocks → scheduleProtection
-- Assignment, workload, escalation → taskDelegation
-- Time entry, billing, who owes, follow-up → billingCapture
-- New leads, intake, pipeline, consultation → salesPipeline
-
-Respond with ONLY the agent name. Nothing else.
-Valid agents: masterOperations, scheduleProtection, taskDelegation, billingCapture, salesPipeline`;
-
 export async function supervisorNode(state: PinhoOpsStateType) {
   const msg = state.input;
+  const log = opsLog.child('supervisor');
 
   try {
+    log.startTimer('routing');
+    log.info('Routing message', {
+      sender: msg.sender_name,
+      phone: msg.sender_phone,
+      message_preview: msg.message_text.substring(0, 80),
+    });
+
     const response = await llm.invoke([
-      new SystemMessage(SUPERVISOR_SYSTEM),
-      new HumanMessage(`Route this WhatsApp message:\n\nFrom: ${msg.sender_name} (${msg.sender_phone})\nMessage: ${msg.message_text}`),
+      new SystemMessage(SUPERVISOR_PROMPT),
+      new HumanMessage(
+        `Route this WhatsApp message:\n\n` +
+        `From: ${msg.sender_name} (${msg.sender_phone})\n` +
+        `Message: ${msg.message_text}\n` +
+        `${msg.context_matter_id ? `Context matter: ${msg.context_matter_id}` : ''}`,
+      ),
     ]);
 
     const content = typeof response.content === 'string' ? response.content : '';
@@ -52,9 +54,16 @@ export async function supervisorNode(state: PinhoOpsStateType) {
     const validAgents = ['masteroperations', 'scheduleprotection', 'taskdelegation', 'billingcapture', 'salespipeline'];
     const matched = validAgents.find(a => agentName.includes(a.toLowerCase()));
 
+    const durationMs = log.endTimer('routing');
+    log.info('Routed to agent', {
+      agent: matched || 'masteroperations',
+      raw_response: agentName,
+      duration_ms: durationMs,
+    });
+
     return { next_agent: matched || 'masteroperations' };
   } catch (err: any) {
-    console.error('[Supervisor] Error:', err.message);
+    log.logError('Supervisor routing failed', err);
     return { next_agent: 'masteroperations', error: err.message };
   }
 }
@@ -70,20 +79,26 @@ function createAgentNode(config: {
   return async function agentNode(state: PinhoOpsStateType) {
     const start = Date.now();
     const steps: Array<{ ts: string; msg: string }> = [];
-    const log = (msg: string) => steps.push({ ts: new Date().toISOString(), msg });
+    const step = (msg: string) => steps.push({ ts: new Date().toISOString(), msg });
+    const log = opsLog.child(config.name);
 
     try {
-      log(`${config.name} activated`);
+      step(`${config.name} activated`);
+      log.info('Agent activated', { sop_ref: config.sopRef });
 
       // Load required state
       const stateData: Record<string, any> = {};
       for (const file of config.stateFiles) {
         try {
+          log.startTimer(`load:${file}`);
           const { data } = await readState(file as any);
           stateData[file] = data;
-          log(`Loaded ${file}`);
+          const ms = log.endTimer(`load:${file}`);
+          step(`Loaded ${file}`);
+          log.debug('State loaded', { file, duration_ms: ms });
         } catch (err: any) {
-          log(`Failed to load ${file}: ${err.message}`);
+          step(`Failed to load ${file}: ${err.message}`);
+          log.warn('State load failed', { file, error: err.message });
         }
       }
 
@@ -92,6 +107,7 @@ function createAgentNode(config: {
         .map(([file, data]) => `--- ${file} ---\n${JSON.stringify(data, null, 2)}`)
         .join('\n\n');
 
+      log.startTimer('llm');
       const response = await llm.invoke([
         new SystemMessage(config.systemPrompt),
         new HumanMessage(
@@ -102,12 +118,16 @@ function createAgentNode(config: {
           `Provide your response as a WhatsApp-formatted message. If state changes are needed, describe them.`
         ),
       ]);
+      const llmMs = log.endTimer('llm');
 
       const reply = typeof response.content === 'string' ? response.content : '';
-      log('Generated response');
+      step('Generated response');
+      log.info('LLM response generated', { duration_ms: llmMs, reply_length: reply.length });
 
       // Check for human-in-the-loop triggers
       let humanApproval = null;
+
+      // Billing sync requires approval
       if (config.name === 'BillingCaptureAgent' && /approv|sync.*clio/i.test(state.input.message_text)) {
         humanApproval = {
           required: true,
@@ -115,8 +135,11 @@ function createAgentNode(config: {
           action_description: `Sync billing entries for matter to Clio`,
           approved: undefined,
         };
-        log('Human-in-the-loop: billing approval required');
+        step('Human-in-the-loop: billing approval required');
+        log.info('Human approval triggered', { trigger: 'billing_sync' });
       }
+
+      // High-risk escalation
       if (/critical|emergency|urgent/i.test(reply)) {
         humanApproval = {
           required: true,
@@ -124,8 +147,36 @@ function createAgentNode(config: {
           action_description: reply.substring(0, 200),
           approved: undefined,
         };
-        log('Human-in-the-loop: high-risk escalation');
+        step('Human-in-the-loop: high-risk escalation');
+        log.info('Human approval triggered', { trigger: 'escalation' });
       }
+
+      // Matter closure requires approval
+      if (config.name === 'MasterOperationsAgent' && /clos|archiv|encerr/i.test(state.input.message_text)) {
+        humanApproval = {
+          required: true,
+          reason: 'Matter closure requires managing partner review',
+          action_description: reply.substring(0, 200),
+          approved: undefined,
+        };
+        step('Human-in-the-loop: matter closure');
+        log.info('Human approval triggered', { trigger: 'matter_closure' });
+      }
+
+      // Escalation Level 3+
+      if (config.name === 'TaskDelegationAgent' && /missed|level\s*[34]|past\s*deadline/i.test(reply)) {
+        humanApproval = {
+          required: true,
+          reason: 'Escalation Level 3+: missed deadline requires partner review',
+          action_description: reply.substring(0, 200),
+          approved: undefined,
+        };
+        step('Human-in-the-loop: escalation Level 3+');
+        log.info('Human approval triggered', { trigger: 'escalation_level3' });
+      }
+
+      const totalMs = Date.now() - start;
+      log.info('Agent completed', { duration_ms: totalMs, human_approval: !!humanApproval });
 
       return {
         reply,
@@ -136,7 +187,7 @@ function createAgentNode(config: {
           files_changed: [],
           audit: {
             started_at: new Date(start).toISOString(),
-            duration_ms: Date.now() - start,
+            duration_ms: totalMs,
             steps,
           },
         }],
@@ -149,7 +200,8 @@ function createAgentNode(config: {
         ...(stateData[STATE_FILES.kpi] ? { kpi: stateData[STATE_FILES.kpi] } : {}),
       };
     } catch (err: any) {
-      log(`ERROR: ${err.message}`);
+      step(`ERROR: ${err.message}`);
+      log.logError('Agent failed', err);
       return {
         reply: `${config.name} error: ${err.message}. Please try again.`,
         error: err.message,
@@ -165,124 +217,39 @@ function createAgentNode(config: {
   };
 }
 
-// ─── Agent Nodes ─────────────────────────────────────────
+// ─── Agent Nodes (using hardened prompts from prompts/supervisor.ts) ──
 
 export const masterOperationsNode = createAgentNode({
   name: 'MasterOperationsAgent',
   sopRef: '§4.1, §9.2',
   stateFiles: [STATE_FILES.tasks, STATE_FILES.promises],
-  systemPrompt: `You are the Master Operations Agent for Pinho Law (SOP §4.1, §9.2).
-You manage matter lifecycle: Open → Active → Pending Client → Pending Court → Closing → Archived.
-
-CRITICAL RULE: Every matter MUST have a next_action AND a deadline. Never allow a matter without both.
-
-You handle:
-- Matter status queries and updates
-- Daily briefings and operational summaries
-- Risk assessment (Normal/Elevated/Critical)
-- 7-day communication SLA enforcement (§6.1)
-
-Respond in WhatsApp format. Use *bold* for headers. Keep responses concise.
-If updating status, always confirm: new status, next_action, and deadline.
-If next_action or deadline is missing, REFUSE the update and ask for both.`,
+  systemPrompt: AGENT_PROMPTS.masterOperations,
 });
 
 export const scheduleProtectionNode = createAgentNode({
   name: 'ScheduleProtectionAgent',
   sopRef: '§6, §10.5',
   stateFiles: [STATE_FILES.kpi, STATE_FILES.tasks],
-  systemPrompt: `You are the Schedule Protection Agent for Pinho Law (SOP §6, §10.5).
-You protect execution blocks (9 AM - 12 PM daily) and manage calendar compliance.
-
-CRITICAL RULE: Execution blocks (9:00-12:00) are SACRED. Never allow scheduling over them.
-
-You handle:
-- Availability checks
-- Meeting scheduling (only outside protected hours)
-- Calendar health reports
-- Upcoming deadline summaries
-- Execution block tracking (min 5/week)
-
-Respond in WhatsApp format. Always warn if someone tries to schedule during execution hours.
-Suggest alternative times when blocking a request.`,
+  systemPrompt: AGENT_PROMPTS.scheduleProtection,
 });
 
 export const taskDelegationNode = createAgentNode({
   name: 'TaskDelegationAgent',
   sopRef: '§3, §5, §9.5',
   stateFiles: [STATE_FILES.tasks],
-  systemPrompt: `You are the Task Delegation Agent for Pinho Law (SOP §3, §5, §9.5).
-You manage task assignment, workload balancing, and the escalation ladder.
-
-TEAM ROSTER:
-- Guillerme (Attorney, max 25 matters, Litigation/Corporate)
-- Inez (Paralegal, max 30 matters, Immigration/Family)
-- Daniel (Attorney, max 25 matters, Immigration/Real Estate)
-- Mariana (Paralegal, max 30 matters, Litigation/Criminal)
-
-ESCALATION LADDER (§9.5):
-- Level 1: 48h before deadline → notify assigned person
-- Level 2: 24h before deadline → notify lead attorney
-- Level 3: Deadline missed → notify managing partner (Guillerme)
-- Level 4: 72h past deadline → emergency all-partner alert
-
-You handle:
-- Task assignment/reassignment
-- Workload reports
-- Escalation checks and triggers
-- Capacity management
-
-Respond in WhatsApp format. Always check capacity before assigning.`,
+  systemPrompt: AGENT_PROMPTS.taskDelegation,
 });
 
 export const billingCaptureNode = createAgentNode({
   name: 'BillingCaptureAgent',
   sopRef: '§8, §9.1',
   stateFiles: [STATE_FILES.billing, STATE_FILES.tasks],
-  systemPrompt: `You are the Billing Capture Agent for Pinho Law (SOP §8, §9.1).
-You handle time entries, billing inquiries, and payment follow-ups.
-
-CRITICAL RULE: Time entries must be logged within 24 hours (§9.1).
-
-You handle:
-- Time entry logging (format: "log Xh on MATTER-ID: description")
-- Who owes money queries
-- Billing follow-up prompt generation (in Brazilian Portuguese per wa-update.txt)
-- Billing summaries
-- 24h compliance checks
-
-For billing follow-ups, generate the EXACT WhatsApp prompt text in Brazilian Portuguese:
-- Professional but warm tone
-- Address by first name
-- Diplomatic mention of balance
-- Sign off as "Equipe PinhoLaw"
-- Under 500 characters
-
-HUMAN-IN-THE-LOOP: Flag for approval before syncing entries to Clio.
-Respond in WhatsApp format.`,
+  systemPrompt: AGENT_PROMPTS.billingCapture,
 });
 
 export const salesPipelineNode = createAgentNode({
   name: 'SalesPipelineAgent',
   sopRef: '§2, §6.2',
   stateFiles: [STATE_FILES.sales],
-  systemPrompt: `You are the Sales Pipeline Agent for Pinho Law (SOP §2, §6.2).
-You manage client intake from lead capture through matter opening.
-
-PIPELINE STAGES: New Lead → Contacted → Consultation Scheduled → Consultation Completed →
-Proposal Sent → Engagement Signed → Conflict Check → Opened in Clio
-
-CRITICAL RULES:
-- §2.4: Conflict check MUST be cleared before engagement signing
-- §9.2: Every lead must have next_action + deadline
-- §6.2: Bi-weekly pipeline prep summaries
-
-You handle:
-- Adding new leads
-- Advancing leads through stages
-- Conflict check management
-- Pipeline reports
-- Bi-weekly prep summaries
-
-Respond in WhatsApp format. Block engagement without cleared conflicts.`,
+  systemPrompt: AGENT_PROMPTS.salesPipeline,
 });

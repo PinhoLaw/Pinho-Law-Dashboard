@@ -10,6 +10,7 @@ import { z } from 'zod';
 import { readState, writeState, commitWithAudit, STATE_FILES, type StateFile } from '@/lib/ops/github';
 import { createClioTask, createClioTimeEntry } from '@/lib/ops/integrations/clio-v4';
 import { readCalendarEvents, createExecutionBlock, checkConflicts } from '@/lib/ops/integrations/microsoft-graph';
+import { syncBillingToClioTool, getSyncStatusTool } from '@/lib/ops/pinhoops/tools/clio-sync';
 
 // ─── GitHub State Tools ──────────────────────────────────
 
@@ -144,6 +145,10 @@ export const createExecutionBlockTool = tool(
   },
 );
 
+// ─── Clio Sync Tools (re-export) ─────────────────────────
+
+export { syncBillingToClioTool, getSyncStatusTool };
+
 // ─── All Tools ───────────────────────────────────────────
 
 export const ALL_TOOLS = [
@@ -153,4 +158,6 @@ export const ALL_TOOLS = [
   createClioTimeEntryTool,
   readCalendarTool,
   createExecutionBlockTool,
+  syncBillingToClioTool,
+  getSyncStatusTool,
 ];

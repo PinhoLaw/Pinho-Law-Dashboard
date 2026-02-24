@@ -9,12 +9,15 @@
 
 import { NextRequest, NextResponse } from 'next/server';
 import { runPinhoOps } from '@/lib/ops/pinhoops/graph';
+import { logRequest, opsLog } from '@/lib/ops/pinhoops/logger';
 
 export const maxDuration = 60; // Vercel Pro function timeout
 
 // ─── POST /api/pinhoops ─────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  const endLog = logRequest('POST', '/api/pinhoops');
+
   try {
     const body = await request.json();
 
@@ -22,13 +25,19 @@ export async function POST(request: NextRequest) {
     const { sender_phone, sender_name, message_text, context_matter_id } = body;
 
     if (!sender_phone || !message_text) {
+      endLog(400, { error: 'missing_required_fields' });
       return NextResponse.json(
         { error: 'sender_phone and message_text are required' },
         { status: 400 },
       );
     }
 
-    console.log(`[PinhoOps] Incoming: ${sender_name || sender_phone} — "${message_text.substring(0, 100)}"`);
+    opsLog.info('Incoming WhatsApp message', {
+      sender: sender_name || sender_phone,
+      phone: sender_phone,
+      message_preview: message_text.substring(0, 100),
+      context_matter_id: context_matter_id || null,
+    });
 
     // Run the LangGraph
     const result = await runPinhoOps({
@@ -38,7 +47,15 @@ export async function POST(request: NextRequest) {
       context_matter_id,
     });
 
-    console.log(`[PinhoOps] Agent: ${result.agent_results?.[0]?.agent || 'unknown'} — ${result.error ? 'ERROR' : 'OK'}`);
+    const agent = result.agent_results?.[0]?.agent || 'unknown';
+    const durationMs = result.agent_results?.[0]?.audit?.duration_ms || 0;
+
+    endLog(200, {
+      agent,
+      duration_ms: durationMs,
+      human_approval: result.human_approval?.required || false,
+      error: result.error || null,
+    });
 
     return NextResponse.json({
       reply: result.reply,
@@ -53,7 +70,8 @@ export async function POST(request: NextRequest) {
       })),
     });
   } catch (err: any) {
-    console.error('[PinhoOps] Fatal error:', err);
+    opsLog.logError('Fatal error in POST /api/pinhoops', err);
+    endLog(500, { error: err.message });
     return NextResponse.json(
       { error: err.message, reply: 'System error. Please try again.' },
       { status: 500 },
@@ -73,6 +91,16 @@ export async function GET() {
       'TaskDelegationAgent',
       'BillingCaptureAgent',
       'SalesPipelineAgent',
+    ],
+    tools: [
+      'read_state',
+      'write_state',
+      'create_clio_task',
+      'create_clio_time_entry',
+      'read_calendar',
+      'create_execution_block',
+      'sync_billing_to_clio',
+      'get_billing_sync_status',
     ],
     status: 'operational',
     timestamp: new Date().toISOString(),
