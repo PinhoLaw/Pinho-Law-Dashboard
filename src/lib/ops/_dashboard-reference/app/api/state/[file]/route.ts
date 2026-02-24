@@ -5,7 +5,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { readState, STATE_FILES, type StateFile } from '../../../../github';
+import { readState, STATE_FILES, type StateFile } from '@/lib/ops/github';
 
 const VALID_FILES = new Set(Object.values(STATE_FILES));
 

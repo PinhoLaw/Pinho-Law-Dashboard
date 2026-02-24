@@ -4,7 +4,7 @@
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { readState, commitWithAudit, STATE_FILES } from '../../../../../integrations/clio-v4';
+import { readState, commitWithAudit, STATE_FILES } from '@/lib/ops/github';
 
 export async function POST(request: NextRequest) {
   try {
@@ -14,7 +14,7 @@ export async function POST(request: NextRequest) {
     }
 
     // Read billing state
-    const { readState: readGH, commitWithAudit: commitGH } = await import('../../../../github');
+    const { readState: readGH, commitWithAudit: commitGH } = await import('@/lib/ops/github');
     const { data: billingDoc } = await readGH(STATE_FILES.billing);
 
     const matter = billingDoc.matters?.find((m: any) => m.clio_matter_id === clio_matter_id);
