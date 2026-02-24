@@ -3,12 +3,11 @@
  * GET  /api/pinhoops — Health check
  *
  * This is the Next.js App Router entry point.
- * Delegates to the graph runner in lib/ops/pinhoops.
+ * Uses dynamic imports to avoid build-time crashes when
+ * ANTHROPIC_API_KEY is not available during static analysis.
  */
 
 import { NextRequest, NextResponse } from 'next/server';
-import { runPinhoOps } from '@/lib/ops/pinhoops/graph';
-import { logRequest, opsLog } from '@/lib/ops/pinhoops/logger';
 
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60; // Vercel Pro function timeout
@@ -16,6 +15,10 @@ export const maxDuration = 60; // Vercel Pro function timeout
 // ─── POST /api/pinhoops ─────────────────────────────────
 
 export async function POST(request: NextRequest) {
+  // Dynamic imports — avoids ChatAnthropic API key validation at build time
+  const { runPinhoOps } = await import('@/lib/ops/pinhoops/graph');
+  const { logRequest, opsLog } = await import('@/lib/ops/pinhoops/logger');
+
   const endLog = logRequest('POST', '/api/pinhoops');
 
   try {
@@ -67,7 +70,8 @@ export async function POST(request: NextRequest) {
       })),
     });
   } catch (err: any) {
-    opsLog.logError('Fatal error in POST /api/pinhoops', err);
+    const { opsLog: log } = await import('@/lib/ops/pinhoops/logger');
+    log.logError('Fatal error in POST /api/pinhoops', err);
     endLog(500, { error: err.message });
     return NextResponse.json(
       { error: err.message, reply: 'System error. Please try again.' },
