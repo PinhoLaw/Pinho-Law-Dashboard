@@ -1,0 +1,87 @@
+{
+  "last_updated": "2026-02-24T05:28:31.059Z",
+  "version": "1.0",
+  "sop_version": "PinhoLaw SOP v1.0",
+  "period": {
+    "start": "2026-02-17",
+    "end": "2026-02-23",
+    "label": "Week of Feb 17–23, 2026"
+  },
+  "operational": {
+    "total_active_matters": 3,
+    "matters_with_next_action": 3,
+    "matters_missing_deadline": 0,
+    "overdue_tasks": 0,
+    "sla_violations_7day": 0,
+    "promises_at_risk": 1,
+    "promises_broken": 0,
+    "average_days_since_contact": 3
+  },
+  "financial": {
+    "total_billable_hours_this_week": 12.5,
+    "total_revenue_this_week": 2575,
+    "total_outstanding": 14525,
+    "total_collected_this_month": 4000,
+    "utilization_rate": 0.78,
+    "realization_rate": 0.92,
+    "average_hourly_effective_rate": 285
+  },
+  "client": {
+    "new_leads_this_week": 2,
+    "consultations_scheduled": 1,
+    "consultations_completed": 0,
+    "engagements_signed": 0,
+    "pipeline_value": 12500,
+    "conversion_rate": 0,
+    "average_lead_response_time_hours": 4
+  },
+  "team": [
+    {
+      "name": "Guillerme",
+      "role": "Managing Partner",
+      "active_matters": 2,
+      "max_matters": 25,
+      "capacity_pct": 8,
+      "billable_hours_this_week": 3.5,
+      "overdue_tasks": 0,
+      "sla_violations": 0
+    },
+    {
+      "name": "Daniel",
+      "role": "Attorney",
+      "active_matters": 1,
+      "max_matters": 25,
+      "capacity_pct": 4,
+      "billable_hours_this_week": 0,
+      "overdue_tasks": 0,
+      "sla_violations": 0
+    },
+    {
+      "name": "Inez",
+      "role": "Senior Paralegal",
+      "active_matters": 1,
+      "max_matters": 30,
+      "capacity_pct": 3,
+      "billable_hours_this_week": 4,
+      "overdue_tasks": 0,
+      "sla_violations": 0
+    },
+    {
+      "name": "Mariana",
+      "role": "Paralegal",
+      "active_matters": 2,
+      "max_matters": 30,
+      "capacity_pct": 7,
+      "billable_hours_this_week": 5,
+      "overdue_tasks": 0,
+      "sla_violations": 0
+    }
+  ],
+  "calendar": {
+    "execution_blocks_this_week": 4,
+    "target_execution_blocks": 5,
+    "execution_block_compliance": 0.8,
+    "protected_hours_violated": 0,
+    "total_meetings_this_week": 6
+  }
+}
