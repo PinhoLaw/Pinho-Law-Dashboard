@@ -3,11 +3,12 @@ import { NextRequest, NextResponse } from 'next/server';
 export async function middleware(req: NextRequest) {
   const path = req.nextUrl.pathname;
 
-  // Skip auth for login page, auth API, Clio OAuth flow, static assets
+  // Skip auth for login page, auth API, Clio OAuth, PinhoOps webhook, static assets
   if (
     path === '/login' ||
     path === '/api/auth' ||
     path.startsWith('/api/clio/') ||
+    path.startsWith('/api/pinhoops') ||
     path.startsWith('/_next') ||
     path.startsWith('/favicon') ||
     path.endsWith('.ico') ||
