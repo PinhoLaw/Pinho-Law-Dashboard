@@ -1,0 +1,40 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+:root {
+  --bg-primary: #0a0a0f;
+  --bg-card: #111118;
+  --bg-card-hover: #16161f;
+  --border: #1e1e2e;
+  --accent: #6366f1;
+  --accent-light: #818cf8;
+  --risk-normal: #22c55e;
+  --risk-elevated: #eab308;
+  --risk-critical: #ef4444;
+}
+
+body {
+  background: var(--bg-primary);
+}
+
+/* Kanban column styling */
+.kanban-column {
+  @apply bg-gray-900/50 border border-gray-800 rounded-lg p-3;
+  min-height: 400px;
+}
+
+.kanban-card {
+  @apply bg-gray-800 border border-gray-700 rounded-md p-3 mb-2 cursor-pointer
+         hover:border-indigo-500/50 transition-colors;
+}
+
+/* Risk flags */
+.risk-normal { @apply border-l-4 border-l-green-500; }
+.risk-elevated { @apply border-l-4 border-l-yellow-500; }
+.risk-critical { @apply border-l-4 border-l-red-500 animate-pulse; }
+
+/* Metric cards */
+.metric-card {
+  @apply bg-gray-900 border border-gray-800 rounded-lg p-4;
+}

@@ -1,0 +1,32 @@
+{
+  "$schema": "https://openapi.vercel.sh/vercel.json",
+  "framework": "nextjs",
+  "buildCommand": "next build",
+  "installCommand": "npm install",
+  "env": {
+    "GITHUB_TOKEN": "@github-token",
+    "GITHUB_OWNER": "@github-owner",
+    "GITHUB_REPO": "@github-repo",
+    "GITHUB_BRANCH": "main",
+    "GITHUB_STATE_PATH": "state/",
+    "DASHBOARD_PASSWORD": "@dashboard-password",
+    "SESSION_SECRET": "@session-secret",
+    "CLIO_CLIENT_ID": "@clio-client-id",
+    "CLIO_CLIENT_SECRET": "@clio-client-secret",
+    "CLIO_REFRESH_TOKEN": "@clio-refresh-token",
+    "CLIO_REDIRECT_URI": "@clio-redirect-uri",
+    "MSGRAPH_CLIENT_ID": "@msgraph-client-id",
+    "MSGRAPH_CLIENT_SECRET": "@msgraph-client-secret",
+    "MSGRAPH_TENANT_ID": "@msgraph-tenant-id",
+    "MSGRAPH_REFRESH_TOKEN": "@msgraph-refresh-token"
+  },
+  "regions": ["iad1"],
+  "headers": [
+    {
+      "source": "/api/(.*)",
+      "headers": [
+        { "key": "Cache-Control", "value": "no-store, max-age=0" }
+      ]
+    }
+  ]
+}
