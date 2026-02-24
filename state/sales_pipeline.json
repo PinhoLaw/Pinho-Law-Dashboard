@@ -1,0 +1,60 @@
+{
+  "last_updated": "2026-02-24T05:28:31.059Z",
+  "version": "1.0",
+  "sop_version": "PinhoLaw SOP v1.0",
+  "summary": {
+    "total_leads": 2,
+    "by_stage": {
+      "New Lead": 1,
+      "Contacted": 0,
+      "Consultation Scheduled": 1,
+      "Consultation Completed": 0,
+      "Proposal Sent": 0,
+      "Engagement Signed": 0,
+      "Conflict Check": 0,
+      "Opened in Clio": 0,
+      "Lost": 0,
+      "Disqualified": 0
+    },
+    "estimated_value": 12500,
+    "conversion_rate": 0
+  },
+  "leads": [
+    {
+      "id": "LEAD-001",
+      "name": "Ana Carolina Vieira",
+      "phone": "+15558882001",
+      "email": "ana.vieira@email.com",
+      "source": "WhatsApp Referral",
+      "matter_type": "Immigration",
+      "stage": "Consultation Scheduled",
+      "estimated_value": 7500,
+      "next_action": "Conduct initial consultation via Zoom",
+      "deadline": "2026-02-26",
+      "assigned_to": "Daniel",
+      "conflict_check_status": "Pending",
+      "notes": "H-1B holder looking to self-petition EB-1A. Has 50+ publications in physics.",
+      "created_at": "2026-02-20T11:00:00Z",
+      "updated_at": "2026-02-24T05:28:31.059Z",
+      "days_in_stage": 4
+    },
+    {
+      "id": "LEAD-002",
+      "name": "Marcus Thompson",
+      "phone": "+15558882002",
+      "email": "mthompson@techstartup.io",
+      "source": "Website Form",
+      "matter_type": "Corporate",
+      "stage": "New Lead",
+      "estimated_value": 5000,
+      "next_action": "Call to discuss business formation needs",
+      "deadline": "2026-02-25",
+      "assigned_to": "Guillerme",
+      "conflict_check_status": "Not Started",
+      "notes": "Tech startup founder needs Delaware C-Corp with FL qualification. 3 co-founders.",
+      "created_at": "2026-02-23T15:00:00Z",
+      "updated_at": "2026-02-24T05:28:31.059Z",
+      "days_in_stage": 1
+    }
+  ]
+}
