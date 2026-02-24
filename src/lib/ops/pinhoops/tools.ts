@@ -149,6 +149,28 @@ export const createExecutionBlockTool = tool(
 
 export { syncBillingToClioTool, getSyncStatusTool };
 
+// ─── WhatsApp Tools ─────────────────────────────────────
+
+export const sendWhatsAppTool = tool(
+  async ({ to, message, reply_to }: {
+    to: string; message: string; reply_to?: string;
+  }) => {
+    const { sendWhatsAppMessage } = await import('@/lib/ops/pinhoops/tools/whatsapp');
+    const result = await sendWhatsAppMessage(to, message, reply_to);
+    if (!result) return 'Failed to send WhatsApp message. Check credentials.';
+    return `WhatsApp sent to ${to}: ${result.messages?.[0]?.id || 'ok'}`;
+  },
+  {
+    name: 'send_whatsapp',
+    description: 'Send a WhatsApp message to a phone number. Use for follow-ups, billing reminders, and client updates. Messages should be in Brazilian Portuguese, under 500 chars, signed "Equipe PinhoLaw".',
+    schema: z.object({
+      to: z.string().describe('Phone number in international format (e.g., "15551234567")'),
+      message: z.string().describe('Message text with WhatsApp formatting (*bold*, _italic_)'),
+      reply_to: z.string().optional().describe('Message ID to reply to'),
+    }),
+  },
+);
+
 // ─── All Tools ───────────────────────────────────────────
 
 export const ALL_TOOLS = [
@@ -160,4 +182,5 @@ export const ALL_TOOLS = [
   createExecutionBlockTool,
   syncBillingToClioTool,
   getSyncStatusTool,
+  sendWhatsAppTool,
 ];
