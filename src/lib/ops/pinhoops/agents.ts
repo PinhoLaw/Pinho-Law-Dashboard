@@ -19,9 +19,11 @@ import { opsLog } from '@/lib/ops/pinhoops/logger';
 // ─── LLM ─────────────────────────────────────────────────
 
 const llm = new ChatAnthropic({
-  model: 'claude-sonnet-4-6',
+  model: 'claude-sonnet-4-20250514',
   temperature: 0,
   maxTokens: 4096,
+  topP: undefined,          // Don't send top_p to avoid -1 default
+  clientOptions: {},
 });
 
 // ─── Supervisor Node ─────────────────────────────────────
