@@ -1,0 +1,15 @@
+{
+  "approvals": [
+    {
+      "id": "apr_mm1bzn2j",
+      "created_at": "2026-02-25T01:03:46.428Z",
+      "agent": "MasterOperationsAgent",
+      "sender_phone": "(407) 819-5809",
+      "sender_name": "Ethan Beta Test",
+      "reason": "High-risk escalation detected",
+      "action_description": "Based on the current state analysis, here are the *3 critical priorities* for tomorrow (Feb 25):\n\n*🔴 PRIORITY 1: TechBridge LLC Formation*\n_Deadline: March 1 (5 days)_\n• Mariana needs to draft operat",
+      "status": "pending"
+    }
+  ],
+  "last_updated": "2026-02-25T01:03:46.428Z"
+}
