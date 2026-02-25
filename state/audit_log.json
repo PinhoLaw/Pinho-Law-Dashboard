@@ -1,0 +1,14 @@
+{
+  "entries": [
+    {
+      "timestamp": "2026-02-25T14:05:34.984Z",
+      "type": "ghl_whatsapp",
+      "sender_phone_hash": "ph_nglspz",
+      "sender_name": "Izi",
+      "agent": "MasterOperationsAgent",
+      "message_length": 5,
+      "reply_length": 862
+    }
+  ],
+  "last_updated": "2026-02-25T14:05:34.984Z"
+}
