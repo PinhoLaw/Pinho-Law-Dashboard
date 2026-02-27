@@ -50,7 +50,13 @@
       "type": "briefing_daily",
       "sent": true,
       "message_length": 1046
+    },
+    {
+      "timestamp": "2026-02-27T14:09:51.222Z",
+      "type": "briefing_daily",
+      "sent": true,
+      "message_length": 1092
     }
   ],
-  "last_updated": "2026-02-26T14:36:17.861Z"
+  "last_updated": "2026-02-27T14:09:51.222Z"
 }
