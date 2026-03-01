@@ -80,7 +80,13 @@
       "type": "briefing_monthly",
       "sent": true,
       "message_length": 1703
+    },
+    {
+      "timestamp": "2026-03-01T14:36:19.649Z",
+      "type": "briefing_monthly",
+      "sent": true,
+      "message_length": 2169
     }
   ],
-  "last_updated": "2026-03-01T14:09:54.167Z"
+  "last_updated": "2026-03-01T14:36:19.649Z"
 }
